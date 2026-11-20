@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">URANEX</string>
+    <string name="title_activity_main">URANEX</string>
+    <string name="package_name">com.uranex.anime</string>
+    <string name="custom_url_scheme">com.uranex.anime</string>
+    <string name="server_client_id">199728394937-77q3iovat4hq4tmad8eu1244vcmla5ir.apps.googleusercontent.com</string>
+</resources>

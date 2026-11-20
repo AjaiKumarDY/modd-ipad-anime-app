@@ -1,0 +1,24 @@
+package com.uranex.anime;
+
+import android.os.Bundle;
+import android.webkit.WebSettings;
+import com.getcapacitor.BridgeActivity;
+import com.codetrixstudio.capacitor.GoogleAuth.GoogleAuth;
+
+public class MainActivity extends BridgeActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        // Explicitly register the native GoogleAuth plugin with BridgeActivity
+        registerPlugin(GoogleAuth.class);
+
+        super.onCreate(savedInstanceState);
+
+        if (this.bridge != null && this.bridge.getWebView() != null) {
+            WebSettings settings = this.bridge.getWebView().getSettings();
+            settings.setMediaPlaybackRequiresUserGesture(false);
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            settings.setDomStorageEnabled(true);
+            settings.setDatabaseEnabled(true);
+        }
+    }
+}

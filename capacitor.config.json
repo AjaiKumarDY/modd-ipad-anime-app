@@ -1,0 +1,23 @@
+{
+  "appId": "com.uranex.anime",
+  "appName": "URANEX",
+  "webDir": "www",
+  "server": {
+    "cleartext": true,
+    "androidScheme": "https",
+    "hostname": "localhost"
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": [
+        "profile",
+        "email"
+      ],
+      "serverClientId": "199728394937-77q3iovat4hq4tmad8eu1244vcmla5ir.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": false
+    }
+  }
+}
