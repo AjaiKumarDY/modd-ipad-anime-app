@@ -2266,6 +2266,41 @@
                 grid-gap: 20px !important;
             }
         }
+    
+        /* === iOS 12 Modal Touch-Scroll & Keyboard Clearance Fix === */
+        .profile-modal-overlay,
+        .search-modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow-y: scroll !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 20px 16px 340px 16px !important;
+            align-items: flex-start !important;
+        }
+
+        .profile-modal-container,
+        .search-modal-container {
+            margin: 0 auto !important;
+            max-width: 560px !important;
+            width: 100% !important;
+            transform: none !important;
+        }
+
+        .profile-modal-body {
+            overflow: visible !important;
+        }
+
+        #customApiInput,
+        .modal-search-input {
+            font-size: 16px !important; /* Prevents iOS Safari auto-zoom on input focus */
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
     </style>
 </head>
 
