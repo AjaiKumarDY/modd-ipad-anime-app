@@ -1,1 +1,56 @@
-﻿
+name: Build iOS 12 IPA for iPad mini 2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-13
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies & sync Capacitor
+        run: |
+          npm install --legacy-peer-deps
+          npx cap sync ios
+
+      - name: Force iOS 12.0 Deployment Target & Install Pods
+        run: |
+          cd ios/App
+          sed -i '' "s/platform :ios, '.*'/platform :ios, '12.0'/g" Podfile
+          pod install --repo-update
+
+      - name: Build Unsigned Archive
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath $PWD/build/App.xcarchive \
+            IPHONEOS_DEPLOYMENT_TARGET=12.0 \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            archive
+
+      - name: Package .ipa
+        run: |
+          mkdir -p Payload
+          cp -r ios/App/build/App.xcarchive/Products/Applications/App.app Payload/
+          zip -r Uranex-iPadMini2.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Uranex-iPadMini2-IPA
+          path: Uranex-iPadMini2.ipa
