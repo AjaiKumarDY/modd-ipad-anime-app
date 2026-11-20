@@ -2189,6 +2189,83 @@
             letter-spacing: 0.5px !important;
             text-transform: uppercase !important;
         }
+    
+        /* === iOS 12.5.8 (Safari 12) & iPad mini 2 (768x1024) Compatibility Layer === */
+        html, body {
+            background-color: var(--uranex-bg-dark, #ffffff);
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+            padding-top: constant(safe-area-inset-top);
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: constant(safe-area-inset-bottom);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Fallback 16:9 Aspect Ratio for Safari 12 (no CSS aspect-ratio support) */
+        .video-viewport,
+        .ios12-aspect-16-9 {
+            position: relative !important;
+            width: 100% !important;
+            height: 0 !important;
+            padding-bottom: 56.25% !important;
+            background: #000000 !important;
+            overflow: hidden !important;
+        }
+
+        .video-viewport > video,
+        .video-viewport > iframe,
+        .video-viewport > .player-loader,
+        #cinemaVideoPlayer,
+        #cinemaIframe,
+        #playerBufferingIndicator {
+            position: absolute !important;
+            top: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Fallback spacing for flex containers where Safari 12 ignores flex gap */
+        .stream-type-pills > * + *,
+        .server-pills > * + *,
+        .cinema-info-row > * + * {
+            margin-left: 8px;
+        }
+
+        .cinema-details > * + * {
+            margin-top: 14px;
+        }
+
+        /* iPad mini 2 Portrait (768px) & Landscape (1024px) Responsive Scaling */
+        @media screen and (min-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+
+            main, .app-shell, .content-wrapper, .cinema-details {
+                max-width: 960px !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                padding-left: 24px !important;
+                padding-right: 24px !important;
+            }
+
+            /* Expand anime card grids cleanly on 768px+ tablet viewport */
+            .anime-grid, .cards-grid, .grid, [class*="grid"] {
+                display: grid !important;
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                grid-gap: 18px !important;
+            }
+        }
+
+        @media screen and (min-width: 1024px) {
+            .anime-grid, .cards-grid, .grid, [class*="grid"] {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                grid-gap: 20px !important;
+            }
+        }
     </style>
 </head>
 
@@ -2436,10 +2513,10 @@
 
         <div class="cinema-stage">
             <div class="video-viewport" id="videoViewport"
-                style="position:relative; width:100%; aspect-ratio:16/9; background:#000000; overflow:hidden;">
+                class="video-viewport ios12-aspect-16-9" style="position:relative; width:100%; height:0; padding-bottom:56.25%; background:#000000; overflow:hidden;">
 
                 <!-- Native HTML5 Video Element (For raw m3u8 / mp4 streams) -->
-                <video id="cinemaVideoPlayer" controls playsinline
+                <video id="cinemaVideoPlayer" controls playsinline webkit-playsinline x-webkit-airplay="allow"
                     style="width:100%; height:100%; object-fit:contain; background:#000000; display:none;">
                 </video>
 
@@ -2452,7 +2529,7 @@
 
                 <!-- Stream Loading Indicator -->
                 <div id="playerBufferingIndicator"
-                    style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.75); z-index:15; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#ffffff; font-family:var(--font-display), sans-serif;">
+                    style="display:none; position:absolute; top:0; right:0; bottom:0; left:0; background:rgba(0,0,0,0.75); z-index:15; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#ffffff; font-family:var(--font-display), sans-serif;">
                     <div
                         style="width:36px; height:36px; border:3px solid rgba(255,255,255,0.2); border-top-color:#ffffff; border-radius:50%; animation:spin 0.8s linear infinite;">
                     </div>
