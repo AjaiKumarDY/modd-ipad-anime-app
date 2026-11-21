@@ -5168,27 +5168,85 @@
                 .catch(function () { return viaFallback(); });
         }
 
-        /* Second endpoint style (aniwatch-api v2) tried when the first yields no direct HLS */
-        function uxResolveV2(episodeId, serverName, category) {
-            var srvName = (serverName || "hd-1").toString().trim().toLowerCase();
-            var cat = (category || "sub").toString().trim().toLowerCase();
-            var url = API_BASE + "/api/v2/hianime/episode/sources?animeEpisodeId=" + encodeURIComponent(episodeId) +
-                "&server=" + encodeURIComponent(srvName) + "&category=" + encodeURIComponent(cat);
-            return fetchWithTimeout(url, 20000)
-                .then(function (res) { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
+        /* Route discovery: probe common "stream" routes on the configured API and scan the JSON for a .m3u8 link.
+           The first route that works is remembered; a total miss is remembered for 10 minutes. */
+        var uxStreamRoute = null;
+        var uxStreamRouteMissAt = 0;
+        var UX_STREAM_PATHS = [
+            "/api/v1/stream", "/api/stream", "/stream",
+            "/api/v2/hianime/episode/sources", "/api/v1/episode/sources", "/anime/episode-sources"
+        ];
+
+        function uxFindHls(node, depth) {
+            if (node === null || node === undefined || depth > 8) return null;
+            if (typeof node === "string") return /^https?:\/\/[^\s"']+\.m3u8([^\s"']*)?$/i.test(node) ? node : null;
+            if (typeof node !== "object") return null;
+            var keys = Object.keys(node);
+            for (var i = 0; i < keys.length; i++) {
+                var hit = uxFindHls(node[keys[i]], depth + 1);
+                if (hit) return hit;
+            }
+            return null;
+        }
+
+        function uxFindTracks(node, depth) {
+            if (!node || typeof node !== "object" || depth > 8) return [];
+            if (Array.isArray(node.tracks)) return node.tracks;
+            var keys = Object.keys(node);
+            for (var i = 0; i < keys.length; i++) {
+                var t = uxFindTracks(node[keys[i]], depth + 1);
+                if (t.length) return t;
+            }
+            return [];
+        }
+
+        function uxStreamUrlFor(path, idForm, serverName, category) {
+            var srv = encodeURIComponent((serverName || "hd-1").toString().trim().toLowerCase());
+            var cat = encodeURIComponent((category || "sub").toString().trim().toLowerCase());
+            var id = encodeURIComponent(idForm);
+            return API_BASE + path + "?id=" + id + "&animeEpisodeId=" + id + "&episodeId=" + id +
+                "&server=" + srv + "&category=" + cat + "&type=" + cat;
+        }
+
+        function uxTryStreamRoute(path, idForm, serverName, category) {
+            return fetchWithTimeout(uxStreamUrlFor(path, idForm, serverName, category), 15000)
+                .then(function (res) { if (!res.ok) return null; return res.json(); })
                 .then(function (json) {
-                    var data = (json && json.data) ? json.data : json;
-                    if (!data || !data.sources) return null;
-                    var tracks = (data.tracks && Array.isArray(data.tracks)) ? data.tracks : [];
-                    for (var i = 0; i < data.sources.length; i++) {
-                        var src = data.sources[i];
-                        if (src && src.url && (src.type === "hls" || /\.m3u8/i.test(src.url))) {
-                            return { url: src.url, isHls: true, tracks: tracks };
-                        }
-                    }
-                    return null;
+                    if (!json) return null;
+                    var link = uxFindHls(json, 0);
+                    if (!link) return null;
+                    return { url: link, isHls: true, tracks: uxFindTracks(json, 0), route: path + "|" + idForm.length };
                 })
                 .catch(function () { return null; });
+        }
+
+        function uxResolveV2(episodeId, serverName, category) {
+            var idForms = [String(episodeId)];
+            var m = String(episodeId).match(/ep=(\d+)/);
+            if (m) idForms.push(m[1]);
+
+            // Known-good route: use it directly
+            if (uxStreamRoute) {
+                var forms = [uxStreamRoute.form === "num" && m ? m[1] : String(episodeId)];
+                return uxTryStreamRoute(uxStreamRoute.path, forms[0], serverName, category);
+            }
+            // Recent total miss: don't hammer a Render free-tier API with 12 requests per server
+            if (uxStreamRouteMissAt && (new Date().getTime() - uxStreamRouteMissAt) < 600000) return Promise.resolve(null);
+
+            var combos = [];
+            for (var p = 0; p < UX_STREAM_PATHS.length; p++) {
+                for (var f = 0; f < idForms.length; f++) combos.push({ path: UX_STREAM_PATHS[p], form: f === 0 ? "full" : "num", id: idForms[f] });
+            }
+            var ci = 0;
+            function step() {
+                if (ci >= combos.length) { uxStreamRouteMissAt = new Date().getTime(); return Promise.resolve(null); }
+                var c = combos[ci++];
+                return uxTryStreamRoute(c.path, c.id, serverName, category).then(function (r) {
+                    if (r) { uxStreamRoute = { path: c.path, form: c.form }; return r; }
+                    return step();
+                });
+            }
+            return step();
         }
 
         function uxResolveSource(episodeId, serverName, category, fallbackUrl) {
