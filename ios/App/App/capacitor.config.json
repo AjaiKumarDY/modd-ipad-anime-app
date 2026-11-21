@@ -9,6 +9,7 @@
 		"hostname": "localhost"
 	},
 	"ios": {
+		"allowsInlineMediaPlayback": true,
 		"allowsLinkPreview": false,
 		"scrollEnabled": true
 	},

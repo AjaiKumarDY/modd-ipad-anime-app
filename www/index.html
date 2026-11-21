@@ -2356,6 +2356,21 @@
             height: 100% !important;
             border: 0 !important;
         }
+    
+        /* === iOS 12 WKWebView Inline Video Layer Compositing Fix === */
+        #cinemaVideoPlayer {
+            background: transparent !important;
+            object-fit: contain !important;
+            -webkit-transform: translateZ(0) !important;
+            transform: translateZ(0) !important;
+            z-index: 5 !important;
+        }
+        #cinemaIframe {
+            background: transparent !important;
+            -webkit-transform: translateZ(0) !important;
+            transform: translateZ(0) !important;
+            z-index: 5 !important;
+        }
     </style>
 </head>
 
@@ -2606,7 +2621,7 @@
                 class="video-viewport ios12-aspect-16-9" style="position:relative; width:100%; height:0; padding-bottom:56.25%; background:#000000; overflow:hidden;">
 
                 <!-- Native HTML5 Video Element (For raw m3u8 / mp4 streams) -->
-                <video id="cinemaVideoPlayer" controls playsinline webkit-playsinline x-webkit-airplay="allow"
+                <video id="cinemaVideoPlayer" controls playsinline webkit-playsinline x-webkit-airplay="allow" preload="auto"
                     style="width:100%; height:100%; object-fit:contain; background:#000000; display:none;">
                 </video>
 
@@ -5401,9 +5416,12 @@
                 attachHlsStream = function (streamUrl, tracks) {
                     var vid = document.getElementById('cinemaVideoPlayer');
                     if (vid && (typeof Hls === 'undefined' || !Hls.isSupported()) && vid.canPlayType('application/vnd.apple.mpegurl')) {
+                        vid.style.display = 'block';
                         vid.src = streamUrl;
+                        vid.onloadedmetadata = function () {
+                            vid.play().catch(function () {});
+                        };
                         vid.load();
-                        vid.play().catch(function () {});
                         if (typeof hidePlayerLoader === 'function') hidePlayerLoader();
                         return;
                     }
