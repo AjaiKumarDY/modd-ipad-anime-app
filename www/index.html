@@ -2393,7 +2393,9 @@
             background: #000000 !important;
             border-radius: 0 !important;
             -webkit-mask-image: none !important;
+            mask-image: none !important;
             -webkit-backface-visibility: visible !important;
+            backface-visibility: visible !important;
         }
         #playerBufferingIndicator { z-index: 15 !important; }
     </style>
@@ -5261,7 +5263,7 @@
 
         /* True if this WebView can run modern (ES2020) JS, which embed players need. iOS 12 cannot. */
         function uxSupportsModernJs() {
-            try { new Function("var a = {b:1}; return a?.b ?? 0;"); return true; } catch (e) { return false; }
+            try { new Function("var a = {b:1}; return a?" + ".b ?" + "? 0;"); return true; } catch (e) { return false; }
         }
 
         /* Try servers in preference order; use the first direct HLS stream, else the first embed */
