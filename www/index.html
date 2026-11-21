@@ -2329,31 +2329,24 @@
             background: #ffffff !important;
         }
     
-        /* === iOS 12 WKWebView Real-Height Video Viewport (Fixes Black Screen / 0px Iframe) === */
-        .video-viewport,
-        .ios12-aspect-16-9 {
+        /* === Safe iOS 12 Video Viewport Height Fix === */
+        #videoViewport.video-viewport {
             position: relative !important;
             width: 100% !important;
             height: 240px !important;
             padding-bottom: 0 !important;
             background: #000000 !important;
-            overflow: visible !important;
         }
-
         @media screen and (min-width: 600px) {
-            .video-viewport,
-            .ios12-aspect-16-9 {
+            #videoViewport.video-viewport {
                 height: 430px !important;
             }
         }
-
         @media screen and (min-width: 900px) {
-            .video-viewport,
-            .ios12-aspect-16-9 {
+            #videoViewport.video-viewport {
                 height: 520px !important;
             }
         }
-
         #cinemaVideoPlayer,
         #cinemaIframe {
             position: absolute !important;
@@ -2361,11 +2354,7 @@
             left: 0 !important;
             width: 100% !important;
             height: 100% !important;
-            min-height: 240px !important;
             border: 0 !important;
-            z-index: 2 !important;
-            -webkit-transform: translateZ(0);
-            transform: translateZ(0);
         }
     </style>
 </head>
@@ -3939,7 +3928,7 @@
 
             card.innerHTML =
                 '<div class="cr-card-poster">' +
-                '<img src="' + posterSrc + '" alt="' + title + '" loading="lazy" onerror="this.onerror=null; this.src=\'' + fallbackPoster + '\'; if(typeof queuePosterHeal==='function'){queuePosterHeal({title:this.alt}, this.closest('.cr-card'));}">' +
+                '<img src="' + posterSrc + '" alt="' + title + '" loading="lazy" onerror="this.onerror=null; this.src=\'' + fallbackPoster + '\';">' +
                 '<span class="cr-badge-corner">' + typeBadge + '</span>' +
                 '<button class="cr-btn-bookmark" title="Save to My Library" onclick="event.stopPropagation(); quickBookmark(\'' + safeId + '\', \'' + safeTitleParam + '\', \'' + safePosterParam + '\')">★</button>' +
                 '<span class="cr-badge-subdub">SUB | DUB</span>' +
@@ -3954,7 +3943,7 @@
                 openSeries(anime.id, title, poster, epsTotal);
             };
 
-            if (posterSrc && posterSrc.toLowerCase().indexOf(".webp") !== -1 && typeof queuePosterHeal === "function") { queuePosterHeal({ title: title }, card); } return card;
+            return card;
         }
         /* Massive 50-Item AniList Genre Library Query */
         function searchGenre(genreName) {
@@ -4897,14 +4886,6 @@
         }
 
         function attachHlsStream(streamUrl, tracks) {
-            var iosVideo = document.getElementById("cinemaVideoPlayer");
-            if (iosVideo && (typeof Hls === "undefined" || !Hls.isSupported()) && iosVideo.canPlayType("application/vnd.apple.mpegurl")) {
-                iosVideo.src = streamUrl;
-                iosVideo.load();
-                iosVideo.play().catch(function(){});
-                if (typeof hidePlayerLoader === "function") hidePlayerLoader();
-                return;
-            }
             var video = document.getElementById("cinemaVideoPlayer");
             if (!video) return;
 
@@ -5392,6 +5373,44 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+    </script>
+    <script>
+        (function () {
+            // Heal .webp posters on iOS 12 (Safari 12 cannot decode WebP) using AniList JPG/PNG covers
+            function healIos12WebpCards() {
+                var imgs = document.querySelectorAll('.cr-card img');
+                for (var i = 0; i < imgs.length; i++) {
+                    var img = imgs[i];
+                    if (img.dataset.iosHealed) continue;
+                    var src = img.getAttribute('src') || '';
+                    if (src.toLowerCase().indexOf('.webp') !== -1 || src.indexOf('unsplash.com') !== -1) {
+                        img.dataset.iosHealed = '1';
+                        var card = img.closest ? img.closest('.cr-card') : img.parentElement.parentElement;
+                        var title = img.getAttribute('alt') || '';
+                        if (title && typeof queuePosterHeal === 'function' && card) {
+                            queuePosterHeal({ title: title }, card);
+                        }
+                    }
+                }
+            }
+            setInterval(healIos12WebpCards, 1500);
+
+            // Native HLS (.m3u8) fallback for iOS 12 Safari when Hls.isSupported() is false
+            if (typeof attachHlsStream === 'function') {
+                var _origAttachHls = attachHlsStream;
+                attachHlsStream = function (streamUrl, tracks) {
+                    var vid = document.getElementById('cinemaVideoPlayer');
+                    if (vid && (typeof Hls === 'undefined' || !Hls.isSupported()) && vid.canPlayType('application/vnd.apple.mpegurl')) {
+                        vid.src = streamUrl;
+                        vid.load();
+                        vid.play().catch(function () {});
+                        if (typeof hidePlayerLoader === 'function') hidePlayerLoader();
+                        return;
+                    }
+                    return _origAttachHls(streamUrl, tracks);
+                };
+            }
+        })();
     </script>
 </body>
 
