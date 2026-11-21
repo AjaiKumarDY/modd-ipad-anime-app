@@ -5305,7 +5305,7 @@
             }
 
             function finish() {
-                var summary = report.join("  |  ");
+                var summary = report.join("  |  ") + "  |  build: v4 route-scan: " + (uxStreamRoute ? ("found " + uxStreamRoute.path) : (uxStreamRouteMissAt ? "no stream route on this API" : "not run"));
                 if (embedFallback && uxSupportsModernJs()) {
                     markPill(embedFallback.srv);
                     playResolvedMedia(embedFallback.url, false, embedFallback.tracks);
