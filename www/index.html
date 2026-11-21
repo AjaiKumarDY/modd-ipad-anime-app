@@ -2328,6 +2328,45 @@
             z-index: 20 !important;
             background: #ffffff !important;
         }
+    
+        /* === iOS 12 WKWebView Real-Height Video Viewport (Fixes Black Screen / 0px Iframe) === */
+        .video-viewport,
+        .ios12-aspect-16-9 {
+            position: relative !important;
+            width: 100% !important;
+            height: 240px !important;
+            padding-bottom: 0 !important;
+            background: #000000 !important;
+            overflow: visible !important;
+        }
+
+        @media screen and (min-width: 600px) {
+            .video-viewport,
+            .ios12-aspect-16-9 {
+                height: 430px !important;
+            }
+        }
+
+        @media screen and (min-width: 900px) {
+            .video-viewport,
+            .ios12-aspect-16-9 {
+                height: 520px !important;
+            }
+        }
+
+        #cinemaVideoPlayer,
+        #cinemaIframe {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 240px !important;
+            border: 0 !important;
+            z-index: 2 !important;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+        }
     </style>
 </head>
 
@@ -3900,7 +3939,7 @@
 
             card.innerHTML =
                 '<div class="cr-card-poster">' +
-                '<img src="' + posterSrc + '" alt="' + title + '" loading="lazy" onerror="this.onerror=null; this.src=\'' + fallbackPoster + '\';">' +
+                '<img src="' + posterSrc + '" alt="' + title + '" loading="lazy" onerror="this.onerror=null; this.src=\'' + fallbackPoster + '\'; if(typeof queuePosterHeal==='function'){queuePosterHeal({title:this.alt}, this.closest('.cr-card'));}">' +
                 '<span class="cr-badge-corner">' + typeBadge + '</span>' +
                 '<button class="cr-btn-bookmark" title="Save to My Library" onclick="event.stopPropagation(); quickBookmark(\'' + safeId + '\', \'' + safeTitleParam + '\', \'' + safePosterParam + '\')">★</button>' +
                 '<span class="cr-badge-subdub">SUB | DUB</span>' +
@@ -3915,7 +3954,7 @@
                 openSeries(anime.id, title, poster, epsTotal);
             };
 
-            return card;
+            if (posterSrc && posterSrc.toLowerCase().indexOf(".webp") !== -1 && typeof queuePosterHeal === "function") { queuePosterHeal({ title: title }, card); } return card;
         }
         /* Massive 50-Item AniList Genre Library Query */
         function searchGenre(genreName) {
@@ -4858,6 +4897,14 @@
         }
 
         function attachHlsStream(streamUrl, tracks) {
+            var iosVideo = document.getElementById("cinemaVideoPlayer");
+            if (iosVideo && (typeof Hls === "undefined" || !Hls.isSupported()) && iosVideo.canPlayType("application/vnd.apple.mpegurl")) {
+                iosVideo.src = streamUrl;
+                iosVideo.load();
+                iosVideo.play().catch(function(){});
+                if (typeof hidePlayerLoader === "function") hidePlayerLoader();
+                return;
+            }
             var video = document.getElementById("cinemaVideoPlayer");
             if (!video) return;
 
