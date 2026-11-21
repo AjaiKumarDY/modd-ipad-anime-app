@@ -920,7 +920,7 @@
             position: fixed;
             inset: 0;
             z-index: 1000;
-            background: #ffffff;
+            background: #0b111b;
             display: none;
             flex-direction: column;
             overflow-y: auto;
@@ -932,8 +932,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--uranex-border);
-            background: #ffffff;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.25);
+            background: #0b111b;
             position: sticky;
             top: 0;
             z-index: 100;
@@ -1003,8 +1003,7 @@
             overflow: hidden;
         }
 
-        #cinemaVideoPlayer,
-        #cinemaIframe {
+        #cinemaVideoPlayer {
             width: 100%;
             height: 100%;
             border: none;
@@ -2216,7 +2215,6 @@
         .video-viewport > iframe,
         .video-viewport > .player-loader,
         #cinemaVideoPlayer,
-        #cinemaIframe,
         #playerBufferingIndicator {
             position: absolute !important;
             top: 0 !important;
@@ -2313,7 +2311,8 @@
             width: 100% !important;
             height: 100% !important;
             z-index: 99990 !important;
-            background: #ffffff !important;
+            background: #0b111b !important;
+            color: #ffffff !important;
             overflow-y: scroll !important;
             -webkit-overflow-scrolling: touch !important;
             padding-top: constant(safe-area-inset-top) !important;
@@ -2326,7 +2325,8 @@
             position: sticky !important;
             top: 0 !important;
             z-index: 20 !important;
-            background: #ffffff !important;
+            background: #0b111b !important;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.25) !important;
         }
     
         /* === Safe iOS 12 Video Viewport Height Fix === */
@@ -2335,7 +2335,7 @@
             width: 100% !important;
             height: 240px !important;
             padding-bottom: 0 !important;
-            background: #000000 !important;
+            background: #0b111b !important;
         }
         @media screen and (min-width: 600px) {
             #videoViewport.video-viewport {
@@ -2347,8 +2347,7 @@
                 height: 520px !important;
             }
         }
-        #cinemaVideoPlayer,
-        #cinemaIframe {
+        #cinemaVideoPlayer {
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
@@ -2365,12 +2364,7 @@
             transform: translateZ(0) !important;
             z-index: 5 !important;
         }
-        #cinemaIframe {
-            background: transparent !important;
-            -webkit-transform: translateZ(0) !important;
-            transform: translateZ(0) !important;
-            z-index: 5 !important;
-        }
+        
     </style>
 
     <style id="ios12-video-fix">
@@ -2383,14 +2377,13 @@
             z-index: 1 !important;
             object-fit: contain !important;
         }
-        #cinemaIframe {
-            background: #000000 !important;
-            -webkit-transform: none !important;
-            transform: none !important;
-            z-index: 1 !important;
-        }
+        
         #videoViewport.video-viewport {
-            background: #000000 !important;
+            position: relative !important;
+            width: 100% !important;
+            height: 240px !important;
+            padding-bottom: 0 !important;
+            background: #0b111b !important;
             border-radius: 0 !important;
             -webkit-mask-image: none !important;
             -webkit-backface-visibility: visible !important;
@@ -2643,39 +2636,31 @@
 
         <div class="cinema-stage">
             <div class="video-viewport" id="videoViewport"
-                class="video-viewport ios12-aspect-16-9" style="position:relative; width:100%; height:0; padding-bottom:56.25%; background:#000000; overflow:hidden;">
+                style="position:relative; width:100%; height:240px; background:#0b111b; border-bottom:1px solid rgba(0,212,255,0.25); overflow:hidden;">
 
-                <!-- Native HTML5 Video Element (For raw m3u8 / mp4 streams) -->
+                <!-- Fallback Video Element for non-native browser preview -->
                 <video id="cinemaVideoPlayer" controls playsinline webkit-playsinline x-webkit-airplay="allow" preload="auto"
-                    style="width:100%; height:100%; object-fit:contain; background:#000000; display:none;">
+                    style="width:100%; height:100%; object-fit:contain; background:#0b111b; display:none;">
                 </video>
 
-                <!-- Dedicated Web Player iframe (For Zokoanime, Megacloud, & Vercel-style embeds) -->
-                <iframe id="cinemaIframe" src="" frameborder="0" scrolling="no" allowfullscreen="true"
-                    webkitallowfullscreen="true" mozallowfullscreen="true" referrerpolicy="no-referrer"
-                    allow="autoplay *; fullscreen *; encrypted-media *; picture-in-picture *"
-                    style="width:100%; height:100%; border:none; display:none; background:#000000;">
-                </iframe>
-
-                <!-- Stream Loading Indicator -->
+                <!-- Stream Loading / Status Indicator (Theme: #0b111b, #00d4ff, Orbitron) -->
                 <div id="playerBufferingIndicator"
-                    style="display:none; position:absolute; top:0; right:0; bottom:0; left:0; background:rgba(0,0,0,0.75); z-index:15; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#ffffff; font-family:var(--font-display), sans-serif;">
+                    style="display:none; position:absolute; top:0; right:0; bottom:0; left:0; background:rgba(11,17,27,0.85); z-index:15; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#00d4ff; font-family:'Orbitron', sans-serif;">
                     <div
-                        style="width:36px; height:36px; border:3px solid rgba(255,255,255,0.2); border-top-color:#ffffff; border-radius:50%; animation:spin 0.8s linear infinite;">
+                        style="width:36px; height:36px; border:3px solid rgba(0,212,255,0.2); border-top-color:#00d4ff; border-radius:50%; animation:spin 0.8s linear infinite;">
                     </div>
-                    <span id="playerBufferingText" style="font-size:0.85rem; letter-spacing:0.5px;">Connecting to native
-                        stream...</span>
+                    <span id="playerBufferingText" style="font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase; color:#00d4ff;">Resolving native stream...</span>
                 </div>
 
                 <div id="streamWatermark"
-                    style="position:absolute; top:12px; right:16px; color:rgba(255,255,255,0.6); font-family:var(--font-display); font-size:0.82rem; pointer-events:none; z-index:10;">
+                    style="position:absolute; top:12px; right:16px; color:rgba(0,212,255,0.8); font-family:'Orbitron', sans-serif; font-size:0.82rem; font-weight:700; pointer-events:none; z-index:10; text-shadow:0 0 8px rgba(0,212,255,0.4);">
                     EP 01
                 </div>
-                            <a id="iosExternalPlayerBtn" href="#" target="_blank" rel="noopener"
-                    onclick="var f=document.getElementById('cinemaIframe'); var v=document.getElementById('cinemaVideoPlayer'); var u=(f&&f.style.display!=='none'&&f.src&&f.src!=='about:blank')?f.src:(v&&v.src?v.src:''); if(u){this.href=u; window.open(u,'_system');} return false;"
-                    style="position:absolute; bottom:12px; right:12px; z-index:25; background:rgba(0,212,255,0.92); color:#0b111b; font-family:var(--font-display),sans-serif; font-size:0.72rem; font-weight:700; padding:6px 12px; border-radius:6px; text-decoration:none; letter-spacing:0.6px; box-shadow:0 2px 10px rgba(0,0,0,0.6);">
+
+                <button id="iosExternalPlayerBtn" onclick="openNativePlayerFullscreen()" type="button"
+                    style="position:absolute; bottom:12px; right:12px; z-index:25; background:#00d4ff; color:#0b111b; font-family:'Orbitron', sans-serif; font-size:0.72rem; font-weight:800; padding:7px 14px; border:none; border-radius:6px; cursor:pointer; letter-spacing:0.8px; box-shadow:0 0 12px rgba(0,212,255,0.5);">
                     OPEN NATIVE PLAYER ↗
-                </a>
+                </button>
             </div>
         </div>
         <div class="cinema-details">
@@ -4737,21 +4722,115 @@
         };
 
         /* ==========================================================================
-           REQUIREMENT C: SERVER ROUTING & ZOKOANIME PRIORITY
+           URANEX NATIVE AVPLAYER PIPELINE & STREAM DISPATCHER
            ========================================================================== */
+        function postToNativePlayer(payload) {
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.uranexNative) {
+                window.webkit.messageHandlers.uranexNative.postMessage(payload);
+                return true;
+            }
+            return false;
+        }
+
+        function getNativeViewportRect() {
+            var vp = document.getElementById("videoViewport");
+            if (!vp) return { x: 0, y: 56, width: window.innerWidth || 768, height: 240 };
+            var r = vp.getBoundingClientRect();
+            return {
+                x: Math.round(r.left),
+                y: Math.round(r.top),
+                width: Math.round(r.width),
+                height: Math.round(r.height)
+            };
+        }
+
+        function updateNativeViewport() {
+            if (!window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.uranexNative) return;
+            var r = getNativeViewportRect();
+            postToNativePlayer({
+                action: "updateRect",
+                rect: r
+            });
+        }
+
+        window.addEventListener("scroll", updateNativeViewport, true);
+        window.addEventListener("resize", updateNativeViewport);
+        document.addEventListener("DOMContentLoaded", function () {
+            var cOverlay = document.getElementById("cinemaOverlay");
+            if (cOverlay) {
+                cOverlay.addEventListener("scroll", updateNativeViewport, { passive: true });
+            }
+        });
+
+        function openNativePlayerFullscreen() {
+            if (!postToNativePlayer({ action: "presentFullscreen" })) {
+                var v = document.getElementById("cinemaVideoPlayer");
+                if (v && v.requestFullscreen) v.requestFullscreen();
+                else if (v && v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+            }
+        }
+
+        window.uranexOnNativePlayerState = function (state, message) {
+            console.log("Uranex native player event:", state, message);
+            if (state === "resolving") {
+                showPlayerLoader(message || "Resolving native stream...");
+            } else if (state === "playing") {
+                hidePlayerLoader();
+            } else if (state === "error") {
+                showPlayerLoader(message || "Playback error. Retrying next server...");
+            } else if (state === "ended") {
+                playNextEpisodeInShelf();
+            } else if (state === "closed") {
+                hidePlayerLoader();
+            }
+        };
+
+        function playNextEpisodeInShelf() {
+            var shelf = document.getElementById("shelfGrid");
+            if (!shelf) return;
+            var tiles = shelf.querySelectorAll(".shelf-ep-btn, .ep-tile");
+            var activeIdx = -1;
+            for (var i = 0; i < tiles.length; i++) {
+                if (tiles[i].classList.contains("active")) {
+                    activeIdx = i;
+                    break;
+                }
+            }
+            if (activeIdx !== -1 && activeIdx + 1 < tiles.length) {
+                tiles[activeIdx + 1].click();
+            }
+        }
+
         function streamEpisode(episodeId, epNum, slug, title) {
             if (!episodeId) return;
 
             activeEpisodeId = String(episodeId).trim();
             activeEpisodeNum = parseInt(epNum, 10) || 1;
+            if (slug) activeAnimeSlug = slug;
 
             var watermark = document.getElementById("streamWatermark");
             if (watermark) watermark.innerText = "EP " + (activeEpisodeNum < 10 ? "0" + activeEpisodeNum : activeEpisodeNum);
 
             var pillsBox = document.getElementById("serverPills");
-            if (pillsBox) pillsBox.innerHTML = '<span style="font-size:0.75rem; color:#737373;">Loading native servers...</span>';
+            if (pillsBox) pillsBox.innerHTML = '<span style="font-size:0.75rem; color:#00d4ff; font-family:Orbitron, sans-serif;">Loading servers...</span>';
 
-            showPlayerLoader("Connecting to stream servers...");
+            showPlayerLoader("Connecting to native stream (HD-1)...");
+
+            var r = getNativeViewportRect();
+            var animeTitleStr = (currentActiveAnime && currentActiveAnime.title) ? currentActiveAnime.title : (title || "");
+
+            // Dispatch immediately to native hardware AVPlayerViewController
+            postToNativePlayer({
+                action: "play",
+                episodeId: activeEpisodeId,
+                episodeNum: activeEpisodeNum,
+                slug: activeAnimeSlug,
+                title: animeTitleStr,
+                apiBase: API_BASE || "",
+                category: selectedTrackType || "sub",
+                serverName: "hd-1",
+                rect: r
+            });
 
             fetchEpisodeServers(activeEpisodeId)
                 .then(function (serversData) {
@@ -4759,16 +4838,16 @@
                     renderNativeServerPills(activeEpisodeId);
                 })
                 .catch(function (err) {
-                    console.warn("Server lookup failed, using fallback servers:", err);
-                    var cleanSlug = activeAnimeSlug || slug || "anime";
+                    console.warn("Server lookup failed, using fallback server pills:", err);
                     currentEpisodeServers = {
                         sub: [
-                            { serverName: "ZokoAnime", url: "https://vidsrc.cc/v2/embed/anime/" + encodeURIComponent(cleanSlug) + "/" + activeEpisodeNum + "/sub" },
-                            { serverName: "MegaCloud", url: "https://autoembed.co/anime/hianime/" + encodeURIComponent(cleanSlug) + "/" + activeEpisodeNum },
-                            { serverName: "HD-2", url: "https://2embed.cc/embed/anime/" + encodeURIComponent(cleanSlug) + "?ep=" + activeEpisodeNum }
+                            { serverName: "HD-1" },
+                            { serverName: "HD-2" },
+                            { serverName: "MegaCloud" }
                         ],
                         dub: [
-                            { serverName: "ZokoAnime", url: "https://vidsrc.cc/v2/embed/anime/" + encodeURIComponent(cleanSlug) + "/" + activeEpisodeNum + "/dub" }
+                            { serverName: "HD-1" },
+                            { serverName: "HD-2" }
                         ]
                     };
                     renderNativeServerPills(activeEpisodeId);
@@ -4784,8 +4863,7 @@
                 cleanEpId = cleanEpId.split("&")[0].split("#")[0].trim();
             }
 
-            // Call /servers/{cleanEpId} with extended timeout helper (up to 80s for cold starts)
-            return fetchWithTimeout(API_BASE + "/servers/" + encodeURIComponent(cleanEpId), 80000)
+            return fetchWithTimeout(API_BASE + "/servers/" + encodeURIComponent(cleanEpId), 30000)
                 .then(function (res) {
                     if (!res.ok) throw new Error("HTTP " + res.status);
                     return res.json();
@@ -4796,8 +4874,7 @@
                     return data;
                 })
                 .catch(function () {
-                    // Secondary route check: /anime/servers?episodeId=
-                    return fetchWithTimeout(API_BASE + "/anime/servers?episodeId=" + encodeURIComponent(fullEpisodeId), 80000)
+                    return fetchWithTimeout(API_BASE + "/anime/servers?episodeId=" + encodeURIComponent(fullEpisodeId), 30000)
                         .then(function (res2) {
                             if (!res2.ok) throw new Error("HTTP " + res2.status);
                             return res2.json();
@@ -4825,7 +4902,6 @@
             if (subBtn) subBtn.style.display = subList.length > 0 ? "inline-block" : "none";
             if (dubBtn) dubBtn.style.display = dubList.length > 0 ? "inline-block" : "none";
 
-            // Track correction if selected track is missing
             if (selectedTrackType === "sub" && subList.length === 0 && dubList.length > 0) selectedTrackType = "dub";
             if (selectedTrackType === "dub" && dubList.length === 0 && subList.length > 0) selectedTrackType = "sub";
 
@@ -4835,34 +4911,21 @@
             var servers = currentEpisodeServers[selectedTrackType] || [];
             if (servers.length === 0) {
                 servers = [
-                    { serverName: "ZokoAnime" },
-                    { serverName: "MegaCloud" },
-                    { serverName: "HD-2" }
+                    { serverName: "HD-1" },
+                    { serverName: "HD-2" },
+                    { serverName: "MegaCloud" }
                 ];
             }
 
-            // 1. Detect if Zokoanime is present in server list (Priority #1)
-            var preferredIndex = -1;
+            var preferredIndex = 0;
             for (var i = 0; i < servers.length; i++) {
                 var sName = (servers[i].serverName || "").toLowerCase();
-                if (sName.indexOf("zoko") !== -1) {
+                if (sName.indexOf("hd-1") !== -1) {
                     preferredIndex = i;
                     break;
                 }
             }
-            // 2. If no Zokoanime, check for megacloud or hd-2
-            if (preferredIndex === -1) {
-                for (var j = 0; j < servers.length; j++) {
-                    var s = (servers[j].serverName || "").toLowerCase();
-                    if (s.indexOf("megacloud") !== -1 || s.indexOf("hd-2") !== -1) {
-                        preferredIndex = j;
-                        break;
-                    }
-                }
-            }
-            if (preferredIndex === -1) preferredIndex = 0;
 
-            // 3. Render Server Pills
             servers.forEach(function (srv, idx) {
                 var sName = srv.serverName || ("Server " + (idx + 1));
                 var isPreferred = (idx === preferredIndex);
@@ -4875,18 +4938,24 @@
                     var all = pillsBox.querySelectorAll(".server-pill");
                     for (var p = 0; p < all.length; p++) all[p].classList.remove("active");
                     pill.classList.add("active");
-                    uxPickToken++; fetchDirectSource(targetId, sName, selectedTrackType, srv.url);
+
+                    showPlayerLoader("Connecting to " + sName.toUpperCase() + "...");
+                    postToNativePlayer({
+                        action: "switchServer",
+                        serverName: sName.toLowerCase()
+                    });
                 };
                 pillsBox.appendChild(pill);
             });
-
-            // 4. Auto-pick: first server that yields a direct HLS stream wins, else first embed
-            uxAutoPickSource(targetId, servers, selectedTrackType, pillsBox);
         }
 
         function setCategory(type) {
             selectedTrackType = type;
             selectedType = type;
+            postToNativePlayer({
+                action: "switchCategory",
+                category: selectedTrackType
+            });
             if (activeEpisodeId && currentEpisodeServers) {
                 renderNativeServerPills(activeEpisodeId);
             }
@@ -4896,343 +4965,28 @@
             setCategory(type);
         }
 
-        /* ==========================================================================
-           REQUIREMENT D: DUAL-MODE STREAM DISPATCHER (playResolvedMedia)
-           ========================================================================== */
-        function fetchDirectSource(episodeId, serverName, category, fallbackUrl) {
-            var targetServer = (serverName || "zokoanime").toString().trim().toLowerCase();
-            var targetCat = (category || selectedTrackType || "sub").toString().trim().toLowerCase();
-
-            showPlayerLoader("Connecting to " + targetServer.toUpperCase() + "...");
-
-            var endpoint = API_BASE + "/anime/episode-srcs?id=" + encodeURIComponent(episodeId) +
-                "&server=" + encodeURIComponent(targetServer) +
-                "&category=" + encodeURIComponent(targetCat);
-
-            fetchWithTimeout(endpoint, 80000)
-                .then(function (res) {
-                    if (!res.ok) throw new Error("HTTP " + res.status);
-                    return res.json();
-                })
-                .then(function (json) {
-                    var data = (json && json.data) ? json.data : json;
-                    if (!data) throw new Error("Empty payload");
-
-                    var streamUrl = "";
-                    var isRawHls = false;
-
-                    // 1. Direct raw m3u8 source
-                    if (data.sources && Array.isArray(data.sources) && data.sources.length > 0) {
-                        streamUrl = data.sources[0].url;
-                        isRawHls = (data.sources[0].type === "hls") || (streamUrl.indexOf(".m3u8") !== -1);
-                    }
-                    // 2. Embed referer link (Zokoanime / Megacloud web player)
-                    else if (data.headers && data.headers.Referer) {
-                        streamUrl = data.headers.Referer;
-                        isRawHls = false;
-                    }
-                    // 3. Fallback iframe URL
-                    else if (data.iframeUrl) {
-                        streamUrl = data.iframeUrl;
-                        isRawHls = false;
-                    } else if (fallbackUrl) {
-                        streamUrl = fallbackUrl;
-                        isRawHls = (fallbackUrl.indexOf(".m3u8") !== -1 || fallbackUrl.indexOf(".mp4") !== -1);
-                    }
-
-                    var tracks = (data.tracks && Array.isArray(data.tracks)) ? data.tracks : [];
-
-                    if (streamUrl) {
-                        playResolvedMedia(streamUrl, isRawHls, tracks);
-                    } else {
-                        throw new Error("No playable stream URL returned");
-                    }
-                })
-                .catch(function (err) {
-                    console.warn(targetServer + " episode-srcs error, checking direct server URL:", err);
-                    if (fallbackUrl) {
-                        var isRaw = (fallbackUrl.indexOf(".m3u8") !== -1 || fallbackUrl.indexOf(".mp4") !== -1);
-                        playResolvedMedia(fallbackUrl, isRaw, []);
-                    } else {
-                        // Cascade: zokoanime -> megacloud -> hd-2
-                        if (targetServer.indexOf("zoko") !== -1) {
-                            fetchDirectSource(episodeId, "megacloud", targetCat);
-                        } else if (targetServer.indexOf("megacloud") !== -1) {
-                            fetchDirectSource(episodeId, "hd-2", targetCat);
-                        } else {
-                            showPlayerLoader("Stream offline. Try another server pill.");
-                        }
-                    }
-                });
-        }
-
-        /* ==========================================================================
-           iOS 12 / SAFARI 12 PLAYER PIPELINE (native HLS first, hls.js only if MSE exists)
-           ========================================================================== */
-        function uxCanNativeHls() {
-            try {
-                var v = document.createElement("video");
-                return !!(v.canPlayType && (v.canPlayType("application/vnd.apple.mpegurl") || v.canPlayType("application/x-mpegURL")));
-            } catch (e) { return false; }
-        }
-
-        function uxHasMse() {
-            try { return typeof Hls !== "undefined" && Hls.isSupported(); } catch (e) { return false; }
-        }
-
         function uxResetVideo(video) {
             if (hlsEngine) { try { hlsEngine.destroy(); } catch (e) { } hlsEngine = null; }
-            try { video.pause(); } catch (e) { }
-            video.onloadedmetadata = null;
-            video.onloadeddata = null;
-            video.oncanplay = null;
-            video.onplaying = null;
-            video.onerror = null;
-            var oldTracks = video.querySelectorAll("track");
-            for (var t = 0; t < oldTracks.length; t++) video.removeChild(oldTracks[t]);
-            video.removeAttribute("src");
-            try { video.load(); } catch (e) { }
-        }
-
-        function uxPlaybackFailed(url, why) {
-            console.warn("Playback failed:", why, url);
-            showPlayerLoader("Could not play this stream here. Try another server pill or tap OPEN NATIVE PLAYER.");
-            var ext = document.getElementById("iosExternalPlayerBtn");
-            if (ext) ext.href = url;
-        }
-
-        function uxPlayNative(video, url) {
-            var started = false;
-            var watchdog = null;
-            function ok() {
-                if (started) return;
-                started = true;
-                if (watchdog) clearTimeout(watchdog);
-                hidePlayerLoader();
+            if (video) {
+                try { video.pause(); } catch (e) { }
+                video.onloadedmetadata = null;
+                video.onloadeddata = null;
+                video.oncanplay = null;
+                video.onplaying = null;
+                video.onerror = null;
+                var oldTracks = video.querySelectorAll("track");
+                for (var t = 0; t < oldTracks.length; t++) video.removeChild(oldTracks[t]);
+                video.removeAttribute("src");
+                try { video.load(); } catch (e) { }
             }
-            video.onloadedmetadata = function () {
-                var p = video.play();
-                if (p && p.catch) p.catch(function () { hidePlayerLoader(); }); // user taps the controls
-            };
-            video.onloadeddata = function () { hidePlayerLoader(); };
-            video.oncanplay = function () { hidePlayerLoader(); };
-            video.onplaying = ok;
-            video.onerror = function () {
-                if (watchdog) clearTimeout(watchdog);
-                uxPlaybackFailed(url, "media error " + (video.error ? video.error.code : "?"));
-            };
-            video.src = url;
-            try { video.load(); } catch (e) { }
-            // Last-resort timer: if nothing has loaded, report instead of leaving a black box
-            watchdog = setTimeout(function () {
-                if (!started && video.readyState < 2) uxPlaybackFailed(url, "timeout");
-            }, 25000);
-        }
-
-        function playResolvedMedia(url, isRawHls, tracks) {
-            var video = document.getElementById("cinemaVideoPlayer");
-            var iframe = document.getElementById("cinemaIframe");
-            if (!video || !iframe) return;
-
-            var extBtn = document.getElementById("extStreamBtn");
-            if (extBtn) extBtn.href = url;
-            var iosBtn = document.getElementById("iosExternalPlayerBtn");
-            if (iosBtn) iosBtn.href = url;
-
-            if (isRawHls) {
-                // Direct stream: hide iframe, use the <video> element
-                iframe.style.display = "none";
-                iframe.src = "about:blank";
-                video.style.display = "block";
-                attachHlsStream(url, tracks || []);
-            } else {
-                // Embed page: dedicated iframe
-                uxResetVideo(video);
-                video.style.display = "none";
-                iframe.style.display = "block";
-                iframe.src = url;
-                hidePlayerLoader();
-            }
-        }
-
-        function attachHlsStream(streamUrl, tracks) {
-            var video = document.getElementById("cinemaVideoPlayer");
-            if (!video) return;
-
-            uxResetVideo(video);
-
-            // Inline playback attributes (must be present before src is set on iOS)
-            video.setAttribute("playsinline", "");
-            video.setAttribute("webkit-playsinline", "");
-            video.playsInline = true;
-            video.controls = true;
-            video.preload = "auto";
-            video.style.display = "block";
-
-            if (tracks && tracks.length > 0) {
-                for (var k = 0; k < tracks.length; k++) {
-                    var tr = tracks[k];
-                    if (tr && (tr.kind === "captions" || tr.kind === "subtitles") && tr.file) {
-                        var trackEl = document.createElement("track");
-                        trackEl.kind = "subtitles";
-                        trackEl.label = tr.label || "English";
-                        trackEl.srclang = (tr.label || "en").toLowerCase().slice(0, 2);
-                        trackEl.src = tr.file;
-                        if (tr.default) trackEl.default = true;
-                        video.appendChild(trackEl);
-                    }
-                }
-            }
-
-            var isM3u8 = /\.m3u8/i.test(streamUrl);
-
-            // 1) Native path: iOS decodes HLS in hardware. Always preferred when available.
-            if (!isM3u8 || uxCanNativeHls()) {
-                uxPlayNative(video, streamUrl);
-                return;
-            }
-
-            // 2) hls.js path (only where Media Source Extensions exist)
-            if (uxHasMse()) {
-                hlsEngine = new Hls({
-                    enableWorker: false,
-                    lowLatencyMode: false,
-                    backBufferLength: 60,
-                    maxBufferLength: 30,
-                    maxMaxBufferLength: 60,
-                    xhrSetup: function (xhr) { xhr.withCredentials = false; }
-                });
-                hlsEngine.loadSource(streamUrl);
-                hlsEngine.attachMedia(video);
-                hlsEngine.on(Hls.Events.MANIFEST_PARSED, function () {
-                    hidePlayerLoader();
-                    var p = video.play();
-                    if (p && p.catch) p.catch(function () { });
-                });
-                hlsEngine.on(Hls.Events.ERROR, function (event, data) {
-                    if (!data || !data.fatal) return;
-                    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                        hlsEngine.startLoad();
-                    } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-                        hlsEngine.recoverMediaError();
-                    } else {
-                        try { hlsEngine.destroy(); } catch (e) { }
-                        hlsEngine = null;
-                        uxPlaybackFailed(streamUrl, "hls.js fatal");
-                    }
-                });
-                return;
-            }
-
-            uxPlaybackFailed(streamUrl, "no HLS support");
-        }
-
-        /* Resolve one server to {url, isHls, tracks} without playing it */
-        function uxResolveSource(episodeId, serverName, category, fallbackUrl) {
-            var srvName = (serverName || "zokoanime").toString().trim().toLowerCase();
-            var cat = (category || selectedTrackType || "sub").toString().trim().toLowerCase();
-            var endpoint = API_BASE + "/anime/episode-srcs?id=" + encodeURIComponent(episodeId) +
-                "&server=" + encodeURIComponent(srvName) + "&category=" + encodeURIComponent(cat);
-
-            function viaFallback() {
-                if (!fallbackUrl) return null;
-                return { url: fallbackUrl, isHls: /\.m3u8/i.test(fallbackUrl), tracks: [] };
-            }
-
-            return fetchWithTimeout(endpoint, 30000)
-                .then(function (res) {
-                    if (!res.ok) throw new Error("HTTP " + res.status);
-                    return res.json();
-                })
-                .then(function (json) {
-                    var data = (json && json.data) ? json.data : json;
-                    if (!data) throw new Error("Empty payload");
-                    var tracks = (data.tracks && Array.isArray(data.tracks)) ? data.tracks : [];
-                    if (data.sources && data.sources.length) {
-                        // prefer an actual HLS source over anything else
-                        for (var i = 0; i < data.sources.length; i++) {
-                            var src = data.sources[i];
-                            if (src && src.url && (src.type === "hls" || /\.m3u8/i.test(src.url))) {
-                                return { url: src.url, isHls: true, tracks: tracks };
-                            }
-                        }
-                        if (data.sources[0] && data.sources[0].url) {
-                            var u0 = data.sources[0].url;
-                            return { url: u0, isHls: /\.mp4/i.test(u0), tracks: tracks };
-                        }
-                    }
-                    if (data.headers && data.headers.Referer) return { url: data.headers.Referer, isHls: false, tracks: tracks };
-                    if (data.iframeUrl) return { url: data.iframeUrl, isHls: false, tracks: tracks };
-                    return viaFallback();
-                })
-                .catch(function () { return viaFallback(); });
-        }
-
-        /* Try servers in preference order; use the first direct HLS stream, else the first embed */
-        var uxPickToken = 0;
-        function uxAutoPickSource(epId, servers, category, pillsBox) {
-            var token = ++uxPickToken;
-            var rank = function (srv) {
-                var n = (srv.serverName || "").toLowerCase();
-                if (n.indexOf("zoko") !== -1) return 0;
-                if (n.indexOf("megacloud") !== -1) return 1;
-                if (n.indexOf("hd-2") !== -1) return 2;
-                return 3;
-            };
-            var order = [];
-            for (var r = 0; r <= 3; r++) {
-                for (var i = 0; i < servers.length; i++) if (rank(servers[i]) === r) order.push(servers[i]);
-            }
-            var embedFallback = null;
-            var pos = 0;
-
-            function markPill(srv) {
-                var idx = -1;
-                for (var q = 0; q < servers.length; q++) if (servers[q] === srv) { idx = q; break; }
-                var all = pillsBox ? pillsBox.querySelectorAll(".server-pill") : [];
-                for (var p = 0; p < all.length; p++) {
-                    if (p === idx) all[p].classList.add("active"); else all[p].classList.remove("active");
-                }
-            }
-
-            function next() {
-                if (token !== uxPickToken) return;
-                if (pos >= order.length) {
-                    if (embedFallback) {
-                        markPill(embedFallback.srv);
-                        playResolvedMedia(embedFallback.url, false, embedFallback.tracks);
-                    } else {
-                        showPlayerLoader("Stream offline. Try another server pill.");
-                    }
-                    return;
-                }
-                var srv = order[pos++];
-                showPlayerLoader("Looking for a direct stream (" + (srv.serverName || "server") + ")...");
-                uxResolveSource(epId, srv.serverName, category, srv.url).then(function (res) {
-                    if (token !== uxPickToken) return;
-                    if (res && res.isHls) {
-                        markPill(srv);
-                        playResolvedMedia(res.url, true, res.tracks);
-                    } else {
-                        if (res && !embedFallback) embedFallback = { srv: srv, url: res.url, tracks: res.tracks };
-                        next();
-                    }
-                });
-            }
-            next();
         }
 
         function closeCinema() {
-            uxPickToken++;
+            postToNativePlayer({ action: "close" });
             var video = document.getElementById("cinemaVideoPlayer");
             if (video) {
                 uxResetVideo(video);
                 video.style.display = "none";
-            }
-            var iframe = document.getElementById("cinemaIframe");
-            if (iframe) {
-                iframe.src = "about:blank";
-                iframe.style.display = "none";
             }
             var overlay = document.getElementById("cinemaOverlay");
             if (overlay) overlay.style.display = "none";

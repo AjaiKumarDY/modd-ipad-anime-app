@@ -14,7 +14,7 @@
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap"
         rel="stylesheet">
     <!-- Native HLS Video Stream Engine -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
     <!-- Official Google Identity Services (GIS) Client Library -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
@@ -920,7 +920,7 @@
             position: fixed;
             inset: 0;
             z-index: 1000;
-            background: #ffffff;
+            background: #0b111b;
             display: none;
             flex-direction: column;
             overflow-y: auto;
@@ -932,8 +932,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--uranex-border);
-            background: #ffffff;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.25);
+            background: #0b111b;
             position: sticky;
             top: 0;
             z-index: 100;
@@ -1003,8 +1003,7 @@
             overflow: hidden;
         }
 
-        #cinemaVideoPlayer,
-        #cinemaIframe {
+        #cinemaVideoPlayer {
             width: 100%;
             height: 100%;
             border: none;
@@ -1718,9 +1717,11 @@
 
             .mobile-nav-btn span {
                 font-family: 'Gokuto Japan Demo', 'Gokure Japan Demo', var(--font-display), sans-serif !important;
-                font-size: 0.50rem !important;          /* Original ultra-compact size */
+                font-size: 0.50rem !important;
+                /* Original ultra-compact size */
                 font-weight: 400 !important;
-                letter-spacing: 0px !important;         /* 0px prevents characters from colliding */
+                letter-spacing: 0px !important;
+                /* 0px prevents characters from colliding */
                 line-height: 1 !important;
                 margin-top: 2px !important;
                 color: #222222 !important;
@@ -1789,6 +1790,7 @@
                 opacity: 0;
                 transform: scale(0.94) translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: scale(1) translateY(0);
@@ -2186,6 +2188,207 @@
             letter-spacing: 0.5px !important;
             text-transform: uppercase !important;
         }
+    
+        /* === iOS 12.5.8 (Safari 12) & iPad mini 2 (768x1024) Compatibility Layer === */
+        html, body {
+            background-color: var(--uranex-bg-dark, #ffffff);
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+            padding-top: constant(safe-area-inset-top);
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: constant(safe-area-inset-bottom);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Fallback 16:9 Aspect Ratio for Safari 12 (no CSS aspect-ratio support) */
+        .video-viewport,
+        .ios12-aspect-16-9 {
+            position: relative !important;
+            width: 100% !important;
+            height: 0 !important;
+            padding-bottom: 56.25% !important;
+            background: #000000 !important;
+            overflow: hidden !important;
+        }
+
+        .video-viewport > video,
+        .video-viewport > iframe,
+        .video-viewport > .player-loader,
+        #cinemaVideoPlayer,
+        #playerBufferingIndicator {
+            position: absolute !important;
+            top: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Fallback spacing for flex containers where Safari 12 ignores flex gap */
+        .stream-type-pills > * + *,
+        .server-pills > * + *,
+        .cinema-info-row > * + * {
+            margin-left: 8px;
+        }
+
+        .cinema-details > * + * {
+            margin-top: 14px;
+        }
+
+        /* iPad mini 2 Portrait (768px) & Landscape (1024px) Responsive Scaling */
+        @media screen and (min-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+
+            main, .app-shell, .content-wrapper, .cinema-details {
+                max-width: 960px !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                padding-left: 24px !important;
+                padding-right: 24px !important;
+            }
+
+            /* Expand anime card grids cleanly on 768px+ tablet viewport */
+            .anime-grid, .cards-grid, .grid, [class*="grid"] {
+                display: grid !important;
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                grid-gap: 18px !important;
+            }
+        }
+
+        @media screen and (min-width: 1024px) {
+            .anime-grid, .cards-grid, .grid, [class*="grid"] {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                grid-gap: 20px !important;
+            }
+        }
+    
+        /* === iOS 12 Modal Touch-Scroll & Keyboard Clearance Fix === */
+        .profile-modal-overlay,
+        .search-modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow-y: scroll !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 20px 16px 340px 16px !important;
+            align-items: flex-start !important;
+        }
+
+        .profile-modal-container,
+        .search-modal-container {
+            margin: 0 auto !important;
+            max-width: 560px !important;
+            width: 100% !important;
+            transform: none !important;
+        }
+
+        .profile-modal-body {
+            overflow: visible !important;
+        }
+
+        #customApiInput,
+        .modal-search-input {
+            font-size: 16px !important; /* Prevents iOS Safari auto-zoom on input focus */
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+    
+        /* === iOS 12 Cinema Player Fullscreen Overlay & Touch-Scroll Fix === */
+        #cinemaOverlay,
+        .cinema-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 99990 !important;
+            background: #0b111b !important;
+            color: #ffffff !important;
+            overflow-y: scroll !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding-top: constant(safe-area-inset-top) !important;
+            padding-top: env(safe-area-inset-top) !important;
+            padding-bottom: 80px !important;
+        }
+
+        .cinema-overlay .cinema-nav {
+            position: -webkit-sticky !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 20 !important;
+            background: #0b111b !important;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.25) !important;
+        }
+    
+        /* === Safe iOS 12 Video Viewport Height Fix === */
+        #videoViewport.video-viewport {
+            position: relative !important;
+            width: 100% !important;
+            height: 240px !important;
+            padding-bottom: 0 !important;
+            background: #0b111b !important;
+        }
+        @media screen and (min-width: 600px) {
+            #videoViewport.video-viewport {
+                height: 430px !important;
+            }
+        }
+        @media screen and (min-width: 900px) {
+            #videoViewport.video-viewport {
+                height: 520px !important;
+            }
+        }
+        #cinemaVideoPlayer {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            border: 0 !important;
+        }
+    
+        /* === iOS 12 WKWebView Inline Video Layer Compositing Fix === */
+        #cinemaVideoPlayer {
+            background: transparent !important;
+            object-fit: contain !important;
+            -webkit-transform: translateZ(0) !important;
+            transform: translateZ(0) !important;
+            z-index: 5 !important;
+        }
+        
+    </style>
+
+    <style id="ios12-video-fix">
+        /* iOS 12 WKWebView: a plain opaque <video> inside a plain box composites reliably.
+           translateZ(0)/transparent backgrounds on <video> are a known cause of black frames + audio. */
+        #cinemaVideoPlayer {
+            background: #000000 !important;
+            -webkit-transform: none !important;
+            transform: none !important;
+            z-index: 1 !important;
+            object-fit: contain !important;
+        }
+        
+        #videoViewport.video-viewport {
+            position: relative !important;
+            width: 100% !important;
+            height: 240px !important;
+            padding-bottom: 0 !important;
+            background: #0b111b !important;
+            border-radius: 0 !important;
+            -webkit-mask-image: none !important;
+            -webkit-backface-visibility: visible !important;
+        }
+        #playerBufferingIndicator { z-index: 15 !important; }
     </style>
 </head>
 
@@ -2225,7 +2428,8 @@
         </div>
 
         <div class="nav-right">
-            <div class="api-badge" id="apiStatusBadge" onclick="openProfileModal()" title="HiAnime API Configuration (Click to manage)" style="cursor: pointer;">
+            <div class="api-badge" id="apiStatusBadge" onclick="openProfileModal()"
+                title="HiAnime API Configuration (Click to manage)" style="cursor: pointer;">
                 <span class="api-dot" id="apiStatusDot"></span>
                 <span id="apiStatusText">API CONFIG</span>
             </div>
@@ -2432,34 +2636,31 @@
 
         <div class="cinema-stage">
             <div class="video-viewport" id="videoViewport"
-                style="position:relative; width:100%; aspect-ratio:16/9; background:#000000; overflow:hidden;">
+                style="position:relative; width:100%; height:240px; background:#0b111b; border-bottom:1px solid rgba(0,212,255,0.25); overflow:hidden;">
 
-                <!-- Native HTML5 Video Element (For raw m3u8 / mp4 streams) -->
-                <video id="cinemaVideoPlayer" controls playsinline
-                    style="width:100%; height:100%; object-fit:contain; background:#000000; display:none;">
+                <!-- Fallback Video Element for non-native browser preview -->
+                <video id="cinemaVideoPlayer" controls playsinline webkit-playsinline x-webkit-airplay="allow" preload="auto"
+                    style="width:100%; height:100%; object-fit:contain; background:#0b111b; display:none;">
                 </video>
 
-                <!-- Dedicated Web Player iframe (For Zokoanime, Megacloud, & Vercel-style embeds) -->
-                <iframe id="cinemaIframe" src="" frameborder="0" scrolling="no" allowfullscreen="true"
-                    webkitallowfullscreen="true" mozallowfullscreen="true" referrerpolicy="no-referrer"
-                    allow="autoplay *; fullscreen *; encrypted-media *; picture-in-picture *"
-                    style="width:100%; height:100%; border:none; display:none; background:#000000;">
-                </iframe>
-
-                <!-- Stream Loading Indicator -->
+                <!-- Stream Loading / Status Indicator (Theme: #0b111b, #00d4ff, Orbitron) -->
                 <div id="playerBufferingIndicator"
-                    style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.75); z-index:15; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#ffffff; font-family:var(--font-display), sans-serif;">
+                    style="display:none; position:absolute; top:0; right:0; bottom:0; left:0; background:rgba(11,17,27,0.85); z-index:15; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#00d4ff; font-family:'Orbitron', sans-serif;">
                     <div
-                        style="width:36px; height:36px; border:3px solid rgba(255,255,255,0.2); border-top-color:#ffffff; border-radius:50%; animation:spin 0.8s linear infinite;">
+                        style="width:36px; height:36px; border:3px solid rgba(0,212,255,0.2); border-top-color:#00d4ff; border-radius:50%; animation:spin 0.8s linear infinite;">
                     </div>
-                    <span id="playerBufferingText" style="font-size:0.85rem; letter-spacing:0.5px;">Connecting to native
-                        stream...</span>
+                    <span id="playerBufferingText" style="font-size:0.85rem; letter-spacing:0.8px; text-transform:uppercase; color:#00d4ff;">Resolving native stream...</span>
                 </div>
 
                 <div id="streamWatermark"
-                    style="position:absolute; top:12px; right:16px; color:rgba(255,255,255,0.6); font-family:var(--font-display); font-size:0.82rem; pointer-events:none; z-index:10;">
+                    style="position:absolute; top:12px; right:16px; color:rgba(0,212,255,0.8); font-family:'Orbitron', sans-serif; font-size:0.82rem; font-weight:700; pointer-events:none; z-index:10; text-shadow:0 0 8px rgba(0,212,255,0.4);">
                     EP 01
                 </div>
+
+                <button id="iosExternalPlayerBtn" onclick="openNativePlayerFullscreen()" type="button"
+                    style="position:absolute; bottom:12px; right:12px; z-index:25; background:#00d4ff; color:#0b111b; font-family:'Orbitron', sans-serif; font-size:0.72rem; font-weight:800; padding:7px 14px; border:none; border-radius:6px; cursor:pointer; letter-spacing:0.8px; box-shadow:0 0 12px rgba(0,212,255,0.5);">
+                    OPEN NATIVE PLAYER ↗
+                </button>
             </div>
         </div>
         <div class="cinema-details">
@@ -2482,10 +2683,12 @@
     <!-- High-Tech Profile & Dynamic API Settings Modal Overlay (#0b111b, #00d4ff) -->
     <div id="profileModalOverlay" class="profile-modal-overlay" onclick="handleProfileModalOverlayClick(event)">
         <div id="profileOverlay" class="profile-modal-container profile-modal-card" onclick="event.stopPropagation()">
+
+            <!-- Modal Top Bar -->
             <div class="profile-modal-header">
                 <div class="profile-modal-badge">
                     <span class="profile-badge-pulse"></span>
-                    <span>URANEX PROFILE & API</span>
+                    <span>URANEX PROFILE &amp; API</span>
                 </div>
                 <button id="profileModalClose" class="profile-modal-close" onclick="closeProfileModal()"
                     title="Close (Esc)">
@@ -2497,7 +2700,7 @@
             </div>
 
             <div class="profile-modal-body">
-                <!-- User Account Section -->
+                <!-- 1. User Account Section -->
                 <div class="profile-section-card profile-modal-card">
                     <div class="profile-card-header">
                         <div class="profile-avatar-circle" id="profileAvatarContainer">
@@ -2505,17 +2708,21 @@
                                 <path
                                     d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                             </svg>
-                            <img id="profileAvatarImg" src="" style="display: none; width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" alt="Profile Avatar" />
+                            <img id="profileAvatarImg" src=""
+                                style="display: none; width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+                                alt="Profile Avatar" />
                         </div>
                         <div class="profile-user-info">
                             <div class="profile-user-title" id="profileUserName">USER ACCOUNT</div>
-                            <div class="profile-user-status" id="profileAccountStatus">Offline Client (Local Storage Active)</div>
+                            <div class="profile-user-status" id="profileAccountStatus">Offline Client (Local Storage
+                                Active)</div>
                         </div>
                     </div>
 
-                    <!-- Single Unified Google Sign-In Button Container -->
-                    <div class="google-signin-wrap" id="googleSignInWrap">
-                        <button class="google-signin-btn" id="googleSignInBtn" onclick="handleGoogleSignIn()">
+                    <!-- Google Auth Container -->
+                    <div class="google-signin-wrap" id="googleSignInWrap" style="margin-top: 14px;">
+                        <button class="google-signin-btn" id="googleSignInBtn" onclick="handleGoogleSignIn()"
+                            type="button">
                             <svg class="google-icon-svg" viewBox="0 0 24 24">
                                 <path fill="#4285F4"
                                     d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
@@ -2531,33 +2738,71 @@
                     </div>
 
                     <!-- Google Signed-In State Actions -->
-                    <div id="googleSignedInWrap" style="display: none; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0, 212, 255, 0.2);">
+                    <div id="googleSignedInWrap"
+                        style="display: none; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0, 212, 255, 0.2);">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00d4ff; box-shadow: 0 0 6px #00d4ff;"></span>
-                            <span id="signedInBadgeText" style="font-size: 0.72rem; color: #00d4ff; letter-spacing: 0.5px;">ACCOUNT CONNECTED</span>
+                            <span
+                                style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00d4ff; box-shadow: 0 0 6px #00d4ff;"></span>
+                            <span id="signedInBadgeText"
+                                style="font-size: 0.72rem; color: #00d4ff; letter-spacing: 0.5px;">ACCOUNT
+                                CONNECTED</span>
                         </div>
-                        <button id="googleSignOutBtn" onclick="signOutGoogle()" class="sign-out-btn" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1.5px solid #ef4444; border-radius: 20px; padding: 6px 16px; font-size: 0.78rem !important; font-weight: 400 !important; letter-spacing: 0.8px !important; text-transform: uppercase !important; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);">
+                        <button id="googleSignOutBtn" onclick="signOutGoogle()" class="sign-out-btn" type="button"
+                            style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1.5px solid #ef4444; border-radius: 20px; padding: 6px 16px; font-size: 0.78rem !important; font-weight: 400 !important; letter-spacing: 0.8px !important; text-transform: uppercase !important; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);">
                             SIGN OUT
                         </button>
                     </div>
 
                     <!-- Local Library Reset -->
-                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: space-between;">
+                    <div
+                        style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: space-between;">
                         <span style="font-size: 0.72rem; color: #94a3b8;">Local Anime Archive:</span>
-                        <button onclick="clearAllLibraryData()" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 4px 10px; font-size: 0.68rem; cursor: pointer;">
+                        <button onclick="clearAllLibraryData()" type="button"
+                            style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 4px 10px; font-size: 0.68rem; cursor: pointer;">
                             FLUSH LIBRARY
                         </button>
                     </div>
                 </div>
 
-                <!-- Custom HiAnime API Configuration Section -->
-                <div class="profile-section-card profile-modal-card">
+                <!-- 2. Admin User Management Dashboard (Shown only if ADMIN_EMAIL matches) -->
+                <div id="adminManagementSection" class="profile-section-card profile-modal-card"
+                    style="display: none; margin-top: 14px; border: 1px solid #00d4ff;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.85rem; color: #00d4ff; font-weight: 600;">ADMIN USER REGISTRY</span>
+                        <button onclick="fetchAdminUserList()" type="button"
+                            style="background: none; border: 1px solid #00d4ff; color: #00d4ff; font-size: 0.68rem; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-family: inherit;">
+                            REFRESH
+                        </button>
+                    </div>
+                    <div
+                        style="max-height: 160px; overflow-y: auto; background: rgba(0, 0, 0, 0.4); border-radius: 6px; padding: 6px;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr
+                                    style="border-bottom: 1px solid rgba(255,255,255,0.15); color: #64748b; font-size: 0.68rem;">
+                                    <th style="padding: 4px;">EMAIL</th>
+                                    <th style="padding: 4px;">NAME</th>
+                                    <th style="padding: 4px;">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUserTableBody">
+                                <!-- Populated dynamically via Google Apps Script -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. Custom HiAnime API Configuration Section -->
+                <div class="profile-section-card profile-modal-card" style="margin-top: 14px;">
                     <div class="api-config-title-row">
                         <span class="api-config-title">CONNECT CUSTOM API</span>
-                        <span class="api-pill-status custom-api-status-badge" id="apiModalStatusPill">NOT CONNECTED</span>
+                        <span class="api-pill-status custom-api-status-badge" id="apiModalStatusPill">NOT
+                            CONNECTED</span>
                     </div>
                     <p class="api-config-desc">
-                        URANEX is decoupled and client-driven. Enter your private HiAnime REST API v2 base URL below (e.g. self-hosted on Render, Railway, or VPS).
+                        URANEX is decoupled and client-driven. Enter your private HiAnime REST API v2 base URL below
+                        (e.g. self-hosted on Render, Railway, or VPS).
                     </p>
 
                     <div class="api-input-wrap">
@@ -2573,13 +2818,13 @@
                     </div>
 
                     <div class="api-actions-row">
-                        <button class="api-action-btn api-save-btn" onclick="saveCustomApiUrl()">
+                        <button class="api-action-btn api-save-btn" onclick="saveCustomApiUrl()" type="button">
                             <svg viewBox="0 0 24 24">
                                 <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
                             </svg>
                             <span>SAVE API</span>
                         </button>
-                        <button class="api-action-btn api-test-btn" onclick="testCustomApiConnection()">
+                        <button class="api-action-btn api-test-btn" onclick="testCustomApiConnection()" type="button">
                             <svg viewBox="0 0 24 24">
                                 <path
                                     d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
@@ -2587,7 +2832,7 @@
                             <span>TEST CONNECTION</span>
                         </button>
                         <button class="api-action-btn api-reset-btn" onclick="resetCustomApiUrl()"
-                            title="Clear and reset">
+                            title="Clear and reset" type="button">
                             <span>RESET</span>
                         </button>
                     </div>
@@ -2597,10 +2842,10 @@
                         <span class="active-url" id="activeApiUrlText">(None - Please enter API URL above)</span>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
-
     <!-- Fullscreen Glassmorphic Search Overlay with Compact Underneath Button -->
     <div id="searchModalOverlay" class="search-modal-overlay" onclick="handleSearchModalOverlayClick(event)">
         <div class="search-modal-container" onclick="event.stopPropagation()">
@@ -2882,13 +3127,27 @@
         }
 
         /* ==========================================================================
-           GOOGLE IDENTITY & RESILIENT PROFILE AUTHENTICATION
-           ========================================================================== */
+       GOOGLE IDENTITY, ADMIN MANAGEMENT & RESILIENT PROFILE AUTHENTICATION
+       ========================================================================== */
+        var MAIN_ADMIN_EMAIL = "voiceoffero@gmail.com";
+        var USER_COLLECTOR_URL = "https://script.google.com/macros/s/AKfycbziyI1KV7L0lE7TynjE6QgjrjI-D7R1ByxxqhSSJAtIZoJeEyS7jWnZeOqQ6YGChnu6sQ/exec";
+
+        // PASTE YOUR REAL CLIENT ID COPIED FROM GOOGLE CLOUD CONSOLE HERE:
+        var HARDCODED_GOOGLE_CLIENT_ID = "199728394937-77q3iovat4hq4tmad8eu1244vcmla5ir.apps.googleusercontent.com";
+
         var isGoogleGisInitialized = false;
 
+        function getEffectiveClientId() {
+            var custom = localStorage.getItem("uranex_google_client_id");
+            if (custom && custom.indexOf(".apps.googleusercontent.com") !== -1) {
+                return custom.trim();
+            }
+            return HARDCODED_GOOGLE_CLIENT_ID;
+        }
+
         function initGoogleAuth() {
-            var clientId = localStorage.getItem("uranex_google_client_id");
-            if (!clientId || clientId.indexOf(".apps.googleusercontent.com") === -1 || clientId.indexOf("938472918234") !== -1) {
+            var clientId = getEffectiveClientId();
+            if (!clientId || clientId.indexOf(".apps.googleusercontent.com") === -1 || clientId.indexOf("YOUR_ACTUAL_ID") !== -1) {
                 return;
             }
             if (typeof google === "undefined" || !google.accounts || !google.accounts.id) {
@@ -2900,7 +3159,8 @@
                     google.accounts.id.initialize({
                         client_id: clientId,
                         callback: handleGoogleCredentialResponse,
-                        auto_select: false
+                        auto_select: false,
+                        cancel_on_tap_outside: true
                     });
                     isGoogleGisInitialized = true;
                 }
@@ -2909,10 +3169,32 @@
             }
         }
 
+        // Auto-initialize when the Google script loads
+        window.addEventListener("load", function () {
+            setTimeout(initGoogleAuth, 800);
+        });
+
+        // Background dispatch to update central Google Sheet
+        function recordUserLogin(userData) {
+            if (!USER_COLLECTOR_URL) return;
+
+            fetch(USER_COLLECTOR_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: userData.email,
+                    name: userData.name,
+                    avatar: userData.avatar || ""
+                })
+            }).catch(function (e) {
+                console.warn("User log sync skipped:", e);
+            });
+        }
+
         function handleGoogleCredentialResponse(response) {
             if (!response || !response.credential) return;
             try {
-                // Decode base64 JWT payload safely
                 var base64Url = response.credential.split('.')[1];
                 var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
                 var jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
@@ -2930,6 +3212,10 @@
                 localStorage.setItem("uranex_user", JSON.stringify(userObj));
                 localStorage.setItem("uranex_user_profile", JSON.stringify(userObj));
                 renderUserProfileState();
+
+                // Dispatch login to your Google Sheet
+                recordUserLogin(userObj);
+
                 if (typeof showToast === "function") {
                     showToast("Welcome, " + userObj.name + "!");
                 }
@@ -2942,23 +3228,38 @@
         }
 
         function handleGoogleSignIn() {
-            var clientId = localStorage.getItem("uranex_google_client_id");
-            var hasValidClientId = clientId && clientId.trim() && clientId.indexOf(".apps.googleusercontent.com") !== -1 && clientId.indexOf("938472918234") === -1;
+            var clientId = getEffectiveClientId();
+            var hasValidClientId = clientId && clientId.indexOf(".apps.googleusercontent.com") !== -1 && clientId.indexOf("YOUR_ACTUAL_ID") === -1;
 
-            if (hasValidClientId && window.location.protocol.indexOf("http") === 0 && typeof google !== "undefined" && google.accounts && google.accounts.id) {
+            // 1. Alert developer if testing under local file:// protocol on desktop
+            if (window.location.protocol === "file:") {
+                var useFallback = confirm(
+                    "Google Identity disallows OAuth over file:/// paths.\n\n" +
+                    "Click OK to test via temporary local sign-in, or test over http://localhost / inside the Android APK for real Google OAuth."
+                );
+                if (useFallback) {
+                    promptCustomGoogleLogin();
+                }
+                return;
+            }
+
+            // 2. Real Google Identity OAuth Flow
+            if (hasValidClientId && typeof google !== "undefined" && google.accounts && google.accounts.id) {
+                initGoogleAuth();
                 try {
                     google.accounts.id.prompt(function (notification) {
                         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                            console.warn("One-tap prompt bypassed, falling back to manual prompt.");
                             promptCustomGoogleLogin();
                         }
                     });
                     return;
                 } catch (e) {
-                    console.warn("GIS prompt notice:", e);
+                    console.warn("GIS prompt execution notice:", e);
                 }
             }
 
-            // Direct in-app display handle prompt fallback
+            // 3. Fallback prompt if GIS is unavailable
             promptCustomGoogleLogin();
         }
 
@@ -2983,24 +3284,12 @@
             localStorage.setItem("uranex_user", JSON.stringify(userObj));
             localStorage.setItem("uranex_user_profile", JSON.stringify(userObj));
             renderUserProfileState();
+
+            // Dispatch login to admin sheet
+            recordUserLogin(userObj);
+
             if (typeof showToast === "function") {
                 showToast("Signed in as " + cleanName);
-            }
-        }
-
-        function promptConfigureClientId() {
-            var current = localStorage.getItem("uranex_google_client_id") || "";
-            var entered = prompt("Enter your Google OAuth Client ID (e.g. 12345-xxx.apps.googleusercontent.com):", current);
-            if (entered === null) return;
-            entered = entered.trim();
-            if (entered) {
-                localStorage.setItem("uranex_google_client_id", entered);
-                if (typeof showToast === "function") showToast("Google Client ID saved: " + entered);
-                isGoogleGisInitialized = false;
-                initGoogleAuth();
-            } else {
-                localStorage.removeItem("uranex_google_client_id");
-                if (typeof showToast === "function") showToast("Google Client ID cleared (Using instant display handle).");
             }
         }
 
@@ -3010,7 +3299,7 @@
             if (typeof google !== "undefined" && google.accounts && google.accounts.id) {
                 try {
                     google.accounts.id.disableAutoSelect();
-                } catch (e) {}
+                } catch (e) { }
             }
             renderUserProfileState();
             if (typeof showToast === "function") {
@@ -3027,13 +3316,15 @@
             var signinWrap = document.getElementById("googleSignInWrap");
             var signedinWrap = document.getElementById("googleSignedInWrap");
 
+            var currentEmail = "";
+
             if (raw) {
                 try {
                     var profile = JSON.parse(raw);
                     if (profile && profile.name) {
                         if (titleEl) titleEl.innerText = profile.name.toUpperCase();
-                        var emailDisplay = profile.email || (profile.name.toLowerCase().replace(/\s+/g, '') + "@gmail.com");
-                        if (statusEl) statusEl.innerText = emailDisplay;
+                        currentEmail = profile.email || (profile.name.toLowerCase().replace(/\s+/g, '') + "@gmail.com");
+                        if (statusEl) statusEl.innerText = currentEmail;
                         var avatarSrc = profile.avatar || profile.picture || "";
                         if (avatarSrc && imgAvatar) {
                             imgAvatar.src = avatarSrc;
@@ -3045,6 +3336,8 @@
                         }
                         if (signinWrap) signinWrap.style.display = "none";
                         if (signedinWrap) signedinWrap.style.display = "flex";
+
+                        checkAdminStatus(currentEmail);
                         return;
                     }
                 } catch (e) {
@@ -3058,6 +3351,63 @@
             if (svgAvatar) svgAvatar.style.display = "block";
             if (signinWrap) signinWrap.style.display = "block";
             if (signedinWrap) signedinWrap.style.display = "none";
+
+            checkAdminStatus("");
+        }
+        /* ==========================================================================
+           ADMIN PANEL CONTROLLER
+           ========================================================================== */
+        function checkAdminStatus(currentEmail) {
+            var adminSection = document.getElementById("adminManagementSection");
+            if (!adminSection) return;
+
+            if (currentEmail && currentEmail.toLowerCase() === MAIN_ADMIN_EMAIL.toLowerCase()) {
+                adminSection.style.display = "block";
+                fetchAdminUserList();
+            } else {
+                adminSection.style.display = "none";
+            }
+        }
+
+        function fetchAdminUserList() {
+            var container = document.getElementById("adminUserTableBody");
+            if (!container) return;
+            container.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 10px; color: #888;">Loading user registry...</td></tr>';
+
+            fetch(USER_COLLECTOR_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" }, // Avoid CORS preflight on simple fetch
+                body: JSON.stringify({
+                    action: "get_users",
+                    admin_email: MAIN_ADMIN_EMAIL
+                })
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    var users = res.users || [];
+                    if (users.length === 0) {
+                        container.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 10px; color: #888;">No users registered yet.</td></tr>';
+                        return;
+                    }
+
+                    container.innerHTML = "";
+                    users.forEach(function (u) {
+                        var tr = document.createElement("tr");
+                        tr.style.borderBottom = "1px solid rgba(255,255,255,0.08)";
+                        tr.innerHTML =
+                            '<td style="padding: 8px 4px; font-size: 0.72rem; color: #e2e8f0;">' + escapeHtml(u.email) + '</td>' +
+                            '<td style="padding: 8px 4px; font-size: 0.72rem; color: #94a3b8;">' + escapeHtml(u.name) + '</td>' +
+                            '<td style="padding: 8px 4px; font-size: 0.70rem; color: #22c55e;">' + escapeHtml(u.status) + '</td>';
+                        container.appendChild(tr);
+                    });
+                })
+                .catch(function (err) {
+                    container.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 10px; color: #ef4444;">Failed to fetch users. Check Apps Script URL.</td></tr>';
+                });
+        }
+
+        function escapeHtml(str) {
+            return (str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         function clearAllLibraryData() {
@@ -3068,7 +3418,6 @@
                 if (typeof showToast === "function") showToast("Library archive cleared: 0 anime saved.");
             }
         }
-
         /**
          * Normalizes status strings into URANEX Library categories
          */
@@ -3747,7 +4096,43 @@
             }
         });
 
-        /* Multi-Franchise Search */
+        /* Multi-Franchise Search (progressive, de-duplicated by AniList id, expands franchise relations) */
+        var uxSearchToken = 0;
+
+        function uxEscHtml(t) {
+            return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function uxAnilistRequest(query, variables) {
+            return fetch(ANILIST_BASE, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                body: JSON.stringify({ query: query, variables: variables })
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (json) {
+                    if (json && json.errors) console.warn("AniList errors:", json.errors);
+                    return json;
+                })
+                .catch(function (e) { console.warn("AniList request failed:", e); return null; });
+        }
+
+        function uxMapMedia(m) {
+            if (!m) return null;
+            var t = m.title || {};
+            var name = t.english || t.romaji || t.native;
+            if (!name) return null;
+            return {
+                id: name,
+                title: name,
+                anilistId: m.id,
+                poster: m.coverImage ? (m.coverImage.large || "") : "",
+                format: m.format || "TV",
+                seasonYear: m.seasonYear || (m.startDate && m.startDate.year) || "",
+                episodes: { eps: m.episodes }
+            };
+        }
+
         function searchAnime(customQuery) {
             var modalInput = document.getElementById("modalSearchInput");
             var legacyInput = document.getElementById("searchInput");
@@ -3768,86 +4153,119 @@
             var grid = document.getElementById("searchGrid");
             grid.innerHTML = "<span style='padding:20px 0; color:var(--uranex-text-secondary); font-size:14px;'>Searching complete anime universe...</span>";
 
-            var hianimePromise = fetchWithTimeout(API_BASE + "/search?q=" + encodeURIComponent(rawQ), 80000)
-                .then(function (res) { return res.json(); })
-                .then(function (json) {
-                    if (!json) return [];
-                    if (Array.isArray(json.data)) return json.data;
-                    if (json.data && Array.isArray(json.data.animes)) return json.data.animes;
-                    if (Array.isArray(json)) return json;
-                    return [];
-                })
-                .catch(function () { return []; });
+            var token = ++uxSearchToken;
+            var seenIds = {};
+            var seenTitles = {};
+            var shown = 0;
 
-            var anilistQuery = [
+            function titleKey(item) {
+                return (item.title || item.name || "").toString().toLowerCase().replace(/[^a-z0-9]+/g, "");
+            }
+
+            function addItems(list) {
+                if (token !== uxSearchToken || !list || !list.length) return;
+                var frag = document.createDocumentFragment();
+                var added = 0;
+                for (var i = 0; i < list.length; i++) {
+                    var item = list[i];
+                    if (!item) continue;
+                    var tk = titleKey(item);
+                    if (item.anilistId) {
+                        // AniList entries are unique by numeric id (never collapse seasons that share a title)
+                        if (seenIds[item.anilistId]) continue;
+                        seenIds[item.anilistId] = true;
+                    } else {
+                        // Backend (HiAnime) entries have no AniList id: de-dupe by normalised title only
+                        if (!tk || seenTitles[tk]) continue;
+                    }
+                    if (tk) seenTitles[tk] = true;
+                    frag.appendChild(createAnimeCard(item));
+                    added++;
+                }
+                if (added > 0) {
+                    if (shown === 0) grid.innerHTML = "";
+                    grid.appendChild(frag);
+                    shown += added;
+                }
+            }
+
+            // Source 1: backend search (skipped when no API base is configured, so it can't hang the UI)
+            var hianimePromise = Promise.resolve([]);
+            if (API_BASE) {
+                hianimePromise = fetchWithTimeout(API_BASE + "/search?q=" + encodeURIComponent(rawQ), 30000)
+                    .then(function (res) { return res.json(); })
+                    .then(function (json) {
+                        if (!json) return [];
+                        if (Array.isArray(json.data)) return json.data;
+                        if (json.data && Array.isArray(json.data.animes)) return json.data.animes;
+                        if (Array.isArray(json)) return json;
+                        return [];
+                    })
+                    .catch(function () { return []; });
+            }
+
+            // Source 2a: plain AniList search, 50 results
+            var basicQuery = [
                 "query ($search: String) {",
-                "  Page(perPage: 30) {",
-                "    media(search: $search, type: ANIME) {",
-                "      id",
-                "      title { romaji english }",
-                "      coverImage { large }",
-                "      format",
-                "      episodes",
+                "  Page(perPage: 50) {",
+                "    media(search: $search, type: ANIME, sort: SEARCH_MATCH) {",
+                "      id title { romaji english native } coverImage { large } format episodes seasonYear",
                 "    }",
                 "  }",
                 "}"
             ].join("\n");
 
-            var anilistPromise = fetch(ANILIST_BASE, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Accept": "application/json" },
-                body: JSON.stringify({ query: anilistQuery, variables: { search: rawQ } })
-            })
-                .then(function (res) { return res.json(); })
-                .then(function (json) {
-                    if (!json || !json.data || !json.data.Page || !json.data.Page.media) return [];
-                    return json.data.Page.media.map(function (m) {
-                        return {
-                            id: m.title.english || m.title.romaji,
-                            title: m.title.english || m.title.romaji,
-                            poster: m.coverImage ? m.coverImage.large : "",
-                            format: m.format,
-                            episodes: { eps: m.episodes }
-                        };
-                    });
-                })
-                .catch(function () { return []; });
+            // Source 2b: AniList search + related entries (sequels, prequels, movies, side stories, spin-offs)
+            var relQuery = [
+                "query ($search: String) {",
+                "  Page(perPage: 12) {",
+                "    media(search: $search, type: ANIME, sort: SEARCH_MATCH) {",
+                "      id",
+                "      relations { edges { relationType node {",
+                "        id type title { romaji english native } coverImage { large } format episodes seasonYear",
+                "      } } }",
+                "    }",
+                "  }",
+                "}"
+            ].join("\n");
 
-            Promise.all([hianimePromise, anilistPromise])
-                .then(function (resultsArr) {
-                    var hianimeResults = resultsArr[0] || [];
-                    var anilistResults = resultsArr[1] || [];
+            var RELATED = { PREQUEL: 1, SEQUEL: 1, PARENT: 1, SIDE_STORY: 1, ALTERNATIVE: 1, SPIN_OFF: 1, SUMMARY: 1 };
 
-                    var map = {};
-                    var combined = [];
+            var basicPromise = uxAnilistRequest(basicQuery, { search: rawQ }).then(function (json) {
+                var media = json && json.data && json.data.Page && json.data.Page.media;
+                var out = [];
+                if (media) for (var i = 0; i < media.length; i++) { var it = uxMapMedia(media[i]); if (it) out.push(it); }
+                addItems(out);
+            });
 
-                    hianimeResults.forEach(function (item) {
-                        var norm = (item.title || item.name || "").toLowerCase().trim();
-                        if (norm && !map[norm]) {
-                            map[norm] = true;
-                            combined.push(item);
+            var relPromise = uxAnilistRequest(relQuery, { search: rawQ }).then(function (json) {
+                var media = json && json.data && json.data.Page && json.data.Page.media;
+                var out = [];
+                if (media) {
+                    for (var i = 0; i < media.length; i++) {
+                        var edges = (media[i].relations && media[i].relations.edges) || [];
+                        for (var e = 0; e < edges.length; e++) {
+                            var edge = edges[e];
+                            if (!edge || !edge.node || edge.node.type !== "ANIME") continue;
+                            if (!RELATED[edge.relationType]) continue;
+                            var it2 = uxMapMedia(edge.node);
+                            if (it2) out.push(it2);
                         }
-                    });
-
-                    anilistResults.forEach(function (item) {
-                        var norm = (item.title || "").toLowerCase().trim();
-                        if (norm && !map[norm]) {
-                            map[norm] = true;
-                            combined.push(item);
-                        }
-                    });
-
-                    grid.innerHTML = "";
-                    if (!combined.length) {
-                        grid.innerHTML = "<span style='padding:20px 0;'>No franchise titles found for \"" + rawQ + "\".</span>";
-                        return;
                     }
+                }
+                addItems(out);
+            });
 
-                    combined.forEach(function (anime) {
-                        grid.appendChild(createAnimeCard(anime));
-                    });
-                    searchSection.scrollIntoView({ behavior: 'smooth' });
-                });
+            var hiPromise = hianimePromise.then(function (list) { addItems(list); });
+
+            Promise.all([basicPromise, relPromise, hiPromise]).then(function () {
+                if (token !== uxSearchToken) return;
+                if (!shown) {
+                    grid.innerHTML = "<span style='padding:20px 0;'>No franchise titles found for \"" + uxEscHtml(rawQ) + "\".</span>";
+                    return;
+                }
+                try { searchSection.scrollIntoView(true); } catch (e) { }
+            });
         }
 
         /* Strict Episode Payload Normalizer (handles json.data.episodes, array, and indexed objects) */
@@ -4060,7 +4478,7 @@
             if (titleEl) titleEl.innerText = decodedTitle;
 
             var cinemaOverlay = document.getElementById("cinemaOverlay");
-            if (cinemaOverlay) cinemaOverlay.style.display = "flex";
+            if (cinemaOverlay) { cinemaOverlay.style.display = "block"; cinemaOverlay.scrollTop = 0; document.body.style.overflow = "hidden"; }
 
             var existingItem = null;
             try { existingItem = getLibraryItem(decodedTitle); } catch (e) { }
@@ -4304,21 +4722,115 @@
         };
 
         /* ==========================================================================
-           REQUIREMENT C: SERVER ROUTING & ZOKOANIME PRIORITY
+           URANEX NATIVE AVPLAYER PIPELINE & STREAM DISPATCHER
            ========================================================================== */
+        function postToNativePlayer(payload) {
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.uranexNative) {
+                window.webkit.messageHandlers.uranexNative.postMessage(payload);
+                return true;
+            }
+            return false;
+        }
+
+        function getNativeViewportRect() {
+            var vp = document.getElementById("videoViewport");
+            if (!vp) return { x: 0, y: 56, width: window.innerWidth || 768, height: 240 };
+            var r = vp.getBoundingClientRect();
+            return {
+                x: Math.round(r.left),
+                y: Math.round(r.top),
+                width: Math.round(r.width),
+                height: Math.round(r.height)
+            };
+        }
+
+        function updateNativeViewport() {
+            if (!window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.uranexNative) return;
+            var r = getNativeViewportRect();
+            postToNativePlayer({
+                action: "updateRect",
+                rect: r
+            });
+        }
+
+        window.addEventListener("scroll", updateNativeViewport, true);
+        window.addEventListener("resize", updateNativeViewport);
+        document.addEventListener("DOMContentLoaded", function () {
+            var cOverlay = document.getElementById("cinemaOverlay");
+            if (cOverlay) {
+                cOverlay.addEventListener("scroll", updateNativeViewport, { passive: true });
+            }
+        });
+
+        function openNativePlayerFullscreen() {
+            if (!postToNativePlayer({ action: "presentFullscreen" })) {
+                var v = document.getElementById("cinemaVideoPlayer");
+                if (v && v.requestFullscreen) v.requestFullscreen();
+                else if (v && v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+            }
+        }
+
+        window.uranexOnNativePlayerState = function (state, message) {
+            console.log("Uranex native player event:", state, message);
+            if (state === "resolving") {
+                showPlayerLoader(message || "Resolving native stream...");
+            } else if (state === "playing") {
+                hidePlayerLoader();
+            } else if (state === "error") {
+                showPlayerLoader(message || "Playback error. Retrying next server...");
+            } else if (state === "ended") {
+                playNextEpisodeInShelf();
+            } else if (state === "closed") {
+                hidePlayerLoader();
+            }
+        };
+
+        function playNextEpisodeInShelf() {
+            var shelf = document.getElementById("shelfGrid");
+            if (!shelf) return;
+            var tiles = shelf.querySelectorAll(".shelf-ep-btn, .ep-tile");
+            var activeIdx = -1;
+            for (var i = 0; i < tiles.length; i++) {
+                if (tiles[i].classList.contains("active")) {
+                    activeIdx = i;
+                    break;
+                }
+            }
+            if (activeIdx !== -1 && activeIdx + 1 < tiles.length) {
+                tiles[activeIdx + 1].click();
+            }
+        }
+
         function streamEpisode(episodeId, epNum, slug, title) {
             if (!episodeId) return;
 
             activeEpisodeId = String(episodeId).trim();
             activeEpisodeNum = parseInt(epNum, 10) || 1;
+            if (slug) activeAnimeSlug = slug;
 
             var watermark = document.getElementById("streamWatermark");
             if (watermark) watermark.innerText = "EP " + (activeEpisodeNum < 10 ? "0" + activeEpisodeNum : activeEpisodeNum);
 
             var pillsBox = document.getElementById("serverPills");
-            if (pillsBox) pillsBox.innerHTML = '<span style="font-size:0.75rem; color:#737373;">Loading native servers...</span>';
+            if (pillsBox) pillsBox.innerHTML = '<span style="font-size:0.75rem; color:#00d4ff; font-family:Orbitron, sans-serif;">Loading servers...</span>';
 
-            showPlayerLoader("Connecting to stream servers...");
+            showPlayerLoader("Connecting to native stream (HD-1)...");
+
+            var r = getNativeViewportRect();
+            var animeTitleStr = (currentActiveAnime && currentActiveAnime.title) ? currentActiveAnime.title : (title || "");
+
+            // Dispatch immediately to native hardware AVPlayerViewController
+            postToNativePlayer({
+                action: "play",
+                episodeId: activeEpisodeId,
+                episodeNum: activeEpisodeNum,
+                slug: activeAnimeSlug,
+                title: animeTitleStr,
+                apiBase: API_BASE || "",
+                category: selectedTrackType || "sub",
+                serverName: "hd-1",
+                rect: r
+            });
 
             fetchEpisodeServers(activeEpisodeId)
                 .then(function (serversData) {
@@ -4326,16 +4838,16 @@
                     renderNativeServerPills(activeEpisodeId);
                 })
                 .catch(function (err) {
-                    console.warn("Server lookup failed, using fallback servers:", err);
-                    var cleanSlug = activeAnimeSlug || slug || "anime";
+                    console.warn("Server lookup failed, using fallback server pills:", err);
                     currentEpisodeServers = {
                         sub: [
-                            { serverName: "ZokoAnime", url: "https://vidsrc.cc/v2/embed/anime/" + encodeURIComponent(cleanSlug) + "/" + activeEpisodeNum + "/sub" },
-                            { serverName: "MegaCloud", url: "https://autoembed.co/anime/hianime/" + encodeURIComponent(cleanSlug) + "/" + activeEpisodeNum },
-                            { serverName: "HD-2", url: "https://2embed.cc/embed/anime/" + encodeURIComponent(cleanSlug) + "?ep=" + activeEpisodeNum }
+                            { serverName: "HD-1" },
+                            { serverName: "HD-2" },
+                            { serverName: "MegaCloud" }
                         ],
                         dub: [
-                            { serverName: "ZokoAnime", url: "https://vidsrc.cc/v2/embed/anime/" + encodeURIComponent(cleanSlug) + "/" + activeEpisodeNum + "/dub" }
+                            { serverName: "HD-1" },
+                            { serverName: "HD-2" }
                         ]
                     };
                     renderNativeServerPills(activeEpisodeId);
@@ -4351,8 +4863,7 @@
                 cleanEpId = cleanEpId.split("&")[0].split("#")[0].trim();
             }
 
-            // Call /servers/{cleanEpId} with extended timeout helper (up to 80s for cold starts)
-            return fetchWithTimeout(API_BASE + "/servers/" + encodeURIComponent(cleanEpId), 80000)
+            return fetchWithTimeout(API_BASE + "/servers/" + encodeURIComponent(cleanEpId), 30000)
                 .then(function (res) {
                     if (!res.ok) throw new Error("HTTP " + res.status);
                     return res.json();
@@ -4363,8 +4874,7 @@
                     return data;
                 })
                 .catch(function () {
-                    // Secondary route check: /anime/servers?episodeId=
-                    return fetchWithTimeout(API_BASE + "/anime/servers?episodeId=" + encodeURIComponent(fullEpisodeId), 80000)
+                    return fetchWithTimeout(API_BASE + "/anime/servers?episodeId=" + encodeURIComponent(fullEpisodeId), 30000)
                         .then(function (res2) {
                             if (!res2.ok) throw new Error("HTTP " + res2.status);
                             return res2.json();
@@ -4392,7 +4902,6 @@
             if (subBtn) subBtn.style.display = subList.length > 0 ? "inline-block" : "none";
             if (dubBtn) dubBtn.style.display = dubList.length > 0 ? "inline-block" : "none";
 
-            // Track correction if selected track is missing
             if (selectedTrackType === "sub" && subList.length === 0 && dubList.length > 0) selectedTrackType = "dub";
             if (selectedTrackType === "dub" && dubList.length === 0 && subList.length > 0) selectedTrackType = "sub";
 
@@ -4402,34 +4911,21 @@
             var servers = currentEpisodeServers[selectedTrackType] || [];
             if (servers.length === 0) {
                 servers = [
-                    { serverName: "ZokoAnime" },
-                    { serverName: "MegaCloud" },
-                    { serverName: "HD-2" }
+                    { serverName: "HD-1" },
+                    { serverName: "HD-2" },
+                    { serverName: "MegaCloud" }
                 ];
             }
 
-            // 1. Detect if Zokoanime is present in server list (Priority #1)
-            var preferredIndex = -1;
+            var preferredIndex = 0;
             for (var i = 0; i < servers.length; i++) {
                 var sName = (servers[i].serverName || "").toLowerCase();
-                if (sName.indexOf("zoko") !== -1) {
+                if (sName.indexOf("hd-1") !== -1) {
                     preferredIndex = i;
                     break;
                 }
             }
-            // 2. If no Zokoanime, check for megacloud or hd-2
-            if (preferredIndex === -1) {
-                for (var j = 0; j < servers.length; j++) {
-                    var s = (servers[j].serverName || "").toLowerCase();
-                    if (s.indexOf("megacloud") !== -1 || s.indexOf("hd-2") !== -1) {
-                        preferredIndex = j;
-                        break;
-                    }
-                }
-            }
-            if (preferredIndex === -1) preferredIndex = 0;
 
-            // 3. Render Server Pills
             servers.forEach(function (srv, idx) {
                 var sName = srv.serverName || ("Server " + (idx + 1));
                 var isPreferred = (idx === preferredIndex);
@@ -4442,20 +4938,24 @@
                     var all = pillsBox.querySelectorAll(".server-pill");
                     for (var p = 0; p < all.length; p++) all[p].classList.remove("active");
                     pill.classList.add("active");
-                    fetchDirectSource(targetId, sName, selectedTrackType, srv.url);
+
+                    showPlayerLoader("Connecting to " + sName.toUpperCase() + "...");
+                    postToNativePlayer({
+                        action: "switchServer",
+                        serverName: sName.toLowerCase()
+                    });
                 };
                 pillsBox.appendChild(pill);
             });
-
-            // 4. Automatically trigger stream extraction for chosen server
-            var chosen = servers[preferredIndex];
-            var selectedServerName = chosen.serverName || "zokoanime";
-            fetchDirectSource(targetId, selectedServerName, selectedTrackType, chosen.url);
         }
 
         function setCategory(type) {
             selectedTrackType = type;
             selectedType = type;
+            postToNativePlayer({
+                action: "switchCategory",
+                category: selectedTrackType
+            });
             if (activeEpisodeId && currentEpisodeServers) {
                 renderNativeServerPills(activeEpisodeId);
             }
@@ -4465,220 +4965,32 @@
             setCategory(type);
         }
 
-        /* ==========================================================================
-           REQUIREMENT D: DUAL-MODE STREAM DISPATCHER (playResolvedMedia)
-           ========================================================================== */
-        function fetchDirectSource(episodeId, serverName, category, fallbackUrl) {
-            var targetServer = (serverName || "zokoanime").toString().trim().toLowerCase();
-            var targetCat = (category || selectedTrackType || "sub").toString().trim().toLowerCase();
-
-            showPlayerLoader("Connecting to " + targetServer.toUpperCase() + "...");
-
-            var endpoint = API_BASE + "/anime/episode-srcs?id=" + encodeURIComponent(episodeId) +
-                "&server=" + encodeURIComponent(targetServer) +
-                "&category=" + encodeURIComponent(targetCat);
-
-            fetchWithTimeout(endpoint, 80000)
-                .then(function (res) {
-                    if (!res.ok) throw new Error("HTTP " + res.status);
-                    return res.json();
-                })
-                .then(function (json) {
-                    var data = (json && json.data) ? json.data : json;
-                    if (!data) throw new Error("Empty payload");
-
-                    var streamUrl = "";
-                    var isRawHls = false;
-
-                    // 1. Direct raw m3u8 source
-                    if (data.sources && Array.isArray(data.sources) && data.sources.length > 0) {
-                        streamUrl = data.sources[0].url;
-                        isRawHls = (data.sources[0].type === "hls") || (streamUrl.indexOf(".m3u8") !== -1);
-                    }
-                    // 2. Embed referer link (Zokoanime / Megacloud web player)
-                    else if (data.headers && data.headers.Referer) {
-                        streamUrl = data.headers.Referer;
-                        isRawHls = false;
-                    }
-                    // 3. Fallback iframe URL
-                    else if (data.iframeUrl) {
-                        streamUrl = data.iframeUrl;
-                        isRawHls = false;
-                    } else if (fallbackUrl) {
-                        streamUrl = fallbackUrl;
-                        isRawHls = (fallbackUrl.indexOf(".m3u8") !== -1 || fallbackUrl.indexOf(".mp4") !== -1);
-                    }
-
-                    var tracks = (data.tracks && Array.isArray(data.tracks)) ? data.tracks : [];
-
-                    if (streamUrl) {
-                        playResolvedMedia(streamUrl, isRawHls, tracks);
-                    } else {
-                        throw new Error("No playable stream URL returned");
-                    }
-                })
-                .catch(function (err) {
-                    console.warn(targetServer + " episode-srcs error, checking direct server URL:", err);
-                    if (fallbackUrl) {
-                        var isRaw = (fallbackUrl.indexOf(".m3u8") !== -1 || fallbackUrl.indexOf(".mp4") !== -1);
-                        playResolvedMedia(fallbackUrl, isRaw, []);
-                    } else {
-                        // Cascade: zokoanime -> megacloud -> hd-2
-                        if (targetServer.indexOf("zoko") !== -1) {
-                            fetchDirectSource(episodeId, "megacloud", targetCat);
-                        } else if (targetServer.indexOf("megacloud") !== -1) {
-                            fetchDirectSource(episodeId, "hd-2", targetCat);
-                        } else {
-                            showPlayerLoader("Stream offline. Try another server pill.");
-                        }
-                    }
-                });
-        }
-
-        function playResolvedMedia(url, isRawHls, tracks) {
-            var video = document.getElementById("cinemaVideoPlayer");
-            var iframe = document.getElementById("cinemaIframe");
-            if (!video || !iframe) return;
-
-            var extBtn = document.getElementById("extStreamBtn");
-            if (extBtn) extBtn.href = url;
-
-            if (isRawHls) {
-                // Case 1 (Raw HLS): Hide iframe, play m3u8 natively via Hls.js
-                iframe.style.display = "none";
-                iframe.src = "about:blank";
-                video.style.display = "block";
-                attachHlsStream(url, tracks || []);
-            } else {
-                // Case 2 (Embed Player / Referer): Zokoanime / Megacloud web player into dedicated iframe
-                if (hlsEngine) {
-                    hlsEngine.destroy();
-                    hlsEngine = null;
-                }
-                video.pause();
+        function uxResetVideo(video) {
+            if (hlsEngine) { try { hlsEngine.destroy(); } catch (e) { } hlsEngine = null; }
+            if (video) {
+                try { video.pause(); } catch (e) { }
+                video.onloadedmetadata = null;
+                video.onloadeddata = null;
+                video.oncanplay = null;
+                video.onplaying = null;
+                video.onerror = null;
+                var oldTracks = video.querySelectorAll("track");
+                for (var t = 0; t < oldTracks.length; t++) video.removeChild(oldTracks[t]);
                 video.removeAttribute("src");
-                video.load();
-                video.style.display = "none";
-
-                iframe.style.display = "block";
-                iframe.src = url;
-                hidePlayerLoader();
-            }
-        }
-
-        function attachHlsStream(streamUrl, tracks) {
-            var video = document.getElementById("cinemaVideoPlayer");
-            if (!video) return;
-
-            // 1. Remove existing track elements
-            var oldTracks = video.querySelectorAll("track");
-            for (var t = 0; t < oldTracks.length; t++) {
-                video.removeChild(oldTracks[t]);
-            }
-
-            // 2. Clear native src attributes before handing over to Hls.js
-            video.pause();
-            video.removeAttribute("src");
-            video.load();
-
-            // 3. Append Subtitle Tracks safely
-            if (tracks && tracks.length > 0) {
-                tracks.forEach(function (tr) {
-                    if (tr && (tr.kind === "captions" || tr.kind === "subtitles") && tr.file) {
-                        var trackEl = document.createElement("track");
-                        trackEl.kind = "subtitles";
-                        trackEl.label = tr.label || "English";
-                        trackEl.srclang = (tr.label || "en").toLowerCase().slice(0, 2);
-                        trackEl.src = tr.file;
-                        if (tr.default) trackEl.default = true;
-                        video.appendChild(trackEl);
-                    }
-                });
-            }
-
-            // 4. Initialize Hls.js
-            if (Hls.isSupported()) {
-                if (hlsEngine) {
-                    hlsEngine.destroy();
-                    hlsEngine = null;
-                }
-
-                hlsEngine = new Hls({
-                    enableWorker: true,
-                    lowLatencyMode: true,
-                    backBufferLength: 60,
-                    maxBufferLength: 30,
-                    maxMaxBufferLength: 60,
-                    xhrSetup: function (xhr) {
-                        xhr.withCredentials = false;
-                    }
-                });
-
-                hlsEngine.loadSource(streamUrl);
-                hlsEngine.attachMedia(video);
-
-                hlsEngine.on(Hls.Events.MANIFEST_PARSED, function () {
-                    hidePlayerLoader();
-                    var playPromise = video.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(function (e) {
-                            console.log("Autoplay prevented:", e);
-                        });
-                    }
-                });
-
-                hlsEngine.on(Hls.Events.ERROR, function (event, data) {
-                    if (data.fatal) {
-                        switch (data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                console.warn("HLS network error, attempting reload...");
-                                hlsEngine.startLoad();
-                                break;
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.warn("HLS media error, attempting recovery...");
-                                hlsEngine.recoverMediaError();
-                                break;
-                            default:
-                                console.error("Fatal HLS unrecoverable error:", data);
-                                hlsEngine.destroy();
-                                showPlayerLoader("Stream offline. Switch to another server pill.");
-                                break;
-                        }
-                    }
-                });
-            } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-                video.src = streamUrl;
-                video.addEventListener("loadedmetadata", function () {
-                    hidePlayerLoader();
-                    var playPromise = video.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(function () { });
-                    }
-                }, { once: true });
-            } else {
-                showPlayerLoader("HLS playback is not supported on this browser.");
+                try { video.load(); } catch (e) { }
             }
         }
 
         function closeCinema() {
-            if (hlsEngine) {
-                hlsEngine.destroy();
-                hlsEngine = null;
-            }
+            postToNativePlayer({ action: "close" });
             var video = document.getElementById("cinemaVideoPlayer");
             if (video) {
-                video.pause();
-                video.removeAttribute("src");
-                video.load();
+                uxResetVideo(video);
                 video.style.display = "none";
-            }
-            var iframe = document.getElementById("cinemaIframe");
-            if (iframe) {
-                iframe.src = "about:blank";
-                iframe.style.display = "none";
             }
             var overlay = document.getElementById("cinemaOverlay");
             if (overlay) overlay.style.display = "none";
+            document.body.style.overflow = "";
             hidePlayerLoader();
         }
 
@@ -5055,6 +5367,29 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+    </script>
+    <script>
+        (function () {
+            // Heal .webp posters on iOS 12 (Safari 12 cannot decode WebP) using AniList JPG/PNG covers
+            function healIos12WebpCards() {
+                var imgs = document.querySelectorAll('.cr-card img');
+                for (var i = 0; i < imgs.length; i++) {
+                    var img = imgs[i];
+                    if (img.dataset.iosHealed) continue;
+                    var src = img.getAttribute('src') || '';
+                    if (src.toLowerCase().indexOf('.webp') !== -1 || src.indexOf('unsplash.com') !== -1) {
+                        img.dataset.iosHealed = '1';
+                        var card = img.closest ? img.closest('.cr-card') : img.parentElement.parentElement;
+                        var title = img.getAttribute('alt') || '';
+                        if (title && typeof queuePosterHeal === 'function' && card) {
+                            queuePosterHeal({ title: title }, card);
+                        }
+                    }
+                }
+            }
+            setInterval(healIos12WebpCards, 1500);
+
+            })();
     </script>
 </body>
 
