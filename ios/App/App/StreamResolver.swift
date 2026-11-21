@@ -604,7 +604,7 @@ final class StreamResolver {
                             url: directURL,
                             referer: "https://allanime.to",
                             origin: "https://allanime.to",
-                            userAgent: self?.defaultUserAgent ?? "",
+                            userAgent: self.defaultUserAgent ?? "",
                             serverName: "AllAnime",
                             category: "sub",
                             isHLS: urlStr.contains(".m3u8")
