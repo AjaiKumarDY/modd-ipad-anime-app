@@ -11,13 +11,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             if let rootVC = self.window?.rootViewController as? CAPBridgeViewController,
                let webView = rootVC.webView {
-                webView.isOpaque = false
+                // NOTE: WKWebViewConfiguration is copied when the WKWebView is created, so setting
+                // allowsInlineMediaPlayback / mediaTypesRequiringUserActionForPlayback here (after creation)
+                // has no effect; Capacitor 3 already creates the webview with inline playback enabled and
+                // the page's <video playsinline> attributes handle the rest.
+                //
+                // An opaque web view gives video a plain, reliably composited surface on iOS 12.
+                webView.isOpaque = true
                 webView.backgroundColor = UIColor.black
                 webView.scrollView.backgroundColor = UIColor.black
-                webView.configuration.allowsInlineMediaPlayback = true
-                if #available(iOS 10.0, *) {
-                    webView.configuration.mediaTypesRequiringUserActionForPlayback = []
-                }
             }
         }
         return true

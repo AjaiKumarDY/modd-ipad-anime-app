@@ -14,7 +14,7 @@
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap"
         rel="stylesheet">
     <!-- Native HLS Video Stream Engine -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
     <!-- Official Google Identity Services (GIS) Client Library -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
@@ -2372,6 +2372,31 @@
             z-index: 5 !important;
         }
     </style>
+
+    <style id="ios12-video-fix">
+        /* iOS 12 WKWebView: a plain opaque <video> inside a plain box composites reliably.
+           translateZ(0)/transparent backgrounds on <video> are a known cause of black frames + audio. */
+        #cinemaVideoPlayer {
+            background: #000000 !important;
+            -webkit-transform: none !important;
+            transform: none !important;
+            z-index: 1 !important;
+            object-fit: contain !important;
+        }
+        #cinemaIframe {
+            background: #000000 !important;
+            -webkit-transform: none !important;
+            transform: none !important;
+            z-index: 1 !important;
+        }
+        #videoViewport.video-viewport {
+            background: #000000 !important;
+            border-radius: 0 !important;
+            -webkit-mask-image: none !important;
+            -webkit-backface-visibility: visible !important;
+        }
+        #playerBufferingIndicator { z-index: 15 !important; }
+    </style>
 </head>
 
 <body>
@@ -4086,7 +4111,43 @@
             }
         });
 
-        /* Multi-Franchise Search */
+        /* Multi-Franchise Search (progressive, de-duplicated by AniList id, expands franchise relations) */
+        var uxSearchToken = 0;
+
+        function uxEscHtml(t) {
+            return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function uxAnilistRequest(query, variables) {
+            return fetch(ANILIST_BASE, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                body: JSON.stringify({ query: query, variables: variables })
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (json) {
+                    if (json && json.errors) console.warn("AniList errors:", json.errors);
+                    return json;
+                })
+                .catch(function (e) { console.warn("AniList request failed:", e); return null; });
+        }
+
+        function uxMapMedia(m) {
+            if (!m) return null;
+            var t = m.title || {};
+            var name = t.english || t.romaji || t.native;
+            if (!name) return null;
+            return {
+                id: name,
+                title: name,
+                anilistId: m.id,
+                poster: m.coverImage ? (m.coverImage.large || "") : "",
+                format: m.format || "TV",
+                seasonYear: m.seasonYear || (m.startDate && m.startDate.year) || "",
+                episodes: { eps: m.episodes }
+            };
+        }
+
         function searchAnime(customQuery) {
             var modalInput = document.getElementById("modalSearchInput");
             var legacyInput = document.getElementById("searchInput");
@@ -4107,86 +4168,119 @@
             var grid = document.getElementById("searchGrid");
             grid.innerHTML = "<span style='padding:20px 0; color:var(--uranex-text-secondary); font-size:14px;'>Searching complete anime universe...</span>";
 
-            var hianimePromise = fetchWithTimeout(API_BASE + "/search?q=" + encodeURIComponent(rawQ), 80000)
-                .then(function (res) { return res.json(); })
-                .then(function (json) {
-                    if (!json) return [];
-                    if (Array.isArray(json.data)) return json.data;
-                    if (json.data && Array.isArray(json.data.animes)) return json.data.animes;
-                    if (Array.isArray(json)) return json;
-                    return [];
-                })
-                .catch(function () { return []; });
+            var token = ++uxSearchToken;
+            var seenIds = {};
+            var seenTitles = {};
+            var shown = 0;
 
-            var anilistQuery = [
+            function titleKey(item) {
+                return (item.title || item.name || "").toString().toLowerCase().replace(/[^a-z0-9]+/g, "");
+            }
+
+            function addItems(list) {
+                if (token !== uxSearchToken || !list || !list.length) return;
+                var frag = document.createDocumentFragment();
+                var added = 0;
+                for (var i = 0; i < list.length; i++) {
+                    var item = list[i];
+                    if (!item) continue;
+                    var tk = titleKey(item);
+                    if (item.anilistId) {
+                        // AniList entries are unique by numeric id (never collapse seasons that share a title)
+                        if (seenIds[item.anilistId]) continue;
+                        seenIds[item.anilistId] = true;
+                    } else {
+                        // Backend (HiAnime) entries have no AniList id: de-dupe by normalised title only
+                        if (!tk || seenTitles[tk]) continue;
+                    }
+                    if (tk) seenTitles[tk] = true;
+                    frag.appendChild(createAnimeCard(item));
+                    added++;
+                }
+                if (added > 0) {
+                    if (shown === 0) grid.innerHTML = "";
+                    grid.appendChild(frag);
+                    shown += added;
+                }
+            }
+
+            // Source 1: backend search (skipped when no API base is configured, so it can't hang the UI)
+            var hianimePromise = Promise.resolve([]);
+            if (API_BASE) {
+                hianimePromise = fetchWithTimeout(API_BASE + "/search?q=" + encodeURIComponent(rawQ), 30000)
+                    .then(function (res) { return res.json(); })
+                    .then(function (json) {
+                        if (!json) return [];
+                        if (Array.isArray(json.data)) return json.data;
+                        if (json.data && Array.isArray(json.data.animes)) return json.data.animes;
+                        if (Array.isArray(json)) return json;
+                        return [];
+                    })
+                    .catch(function () { return []; });
+            }
+
+            // Source 2a: plain AniList search, 50 results
+            var basicQuery = [
                 "query ($search: String) {",
-                "  Page(perPage: 30) {",
-                "    media(search: $search, type: ANIME) {",
-                "      id",
-                "      title { romaji english }",
-                "      coverImage { large }",
-                "      format",
-                "      episodes",
+                "  Page(perPage: 50) {",
+                "    media(search: $search, type: ANIME, sort: SEARCH_MATCH) {",
+                "      id title { romaji english native } coverImage { large } format episodes seasonYear",
                 "    }",
                 "  }",
                 "}"
             ].join("\n");
 
-            var anilistPromise = fetch(ANILIST_BASE, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Accept": "application/json" },
-                body: JSON.stringify({ query: anilistQuery, variables: { search: rawQ } })
-            })
-                .then(function (res) { return res.json(); })
-                .then(function (json) {
-                    if (!json || !json.data || !json.data.Page || !json.data.Page.media) return [];
-                    return json.data.Page.media.map(function (m) {
-                        return {
-                            id: m.title.english || m.title.romaji,
-                            title: m.title.english || m.title.romaji,
-                            poster: m.coverImage ? m.coverImage.large : "",
-                            format: m.format,
-                            episodes: { eps: m.episodes }
-                        };
-                    });
-                })
-                .catch(function () { return []; });
+            // Source 2b: AniList search + related entries (sequels, prequels, movies, side stories, spin-offs)
+            var relQuery = [
+                "query ($search: String) {",
+                "  Page(perPage: 12) {",
+                "    media(search: $search, type: ANIME, sort: SEARCH_MATCH) {",
+                "      id",
+                "      relations { edges { relationType node {",
+                "        id type title { romaji english native } coverImage { large } format episodes seasonYear",
+                "      } } }",
+                "    }",
+                "  }",
+                "}"
+            ].join("\n");
 
-            Promise.all([hianimePromise, anilistPromise])
-                .then(function (resultsArr) {
-                    var hianimeResults = resultsArr[0] || [];
-                    var anilistResults = resultsArr[1] || [];
+            var RELATED = { PREQUEL: 1, SEQUEL: 1, PARENT: 1, SIDE_STORY: 1, ALTERNATIVE: 1, SPIN_OFF: 1, SUMMARY: 1 };
 
-                    var map = {};
-                    var combined = [];
+            var basicPromise = uxAnilistRequest(basicQuery, { search: rawQ }).then(function (json) {
+                var media = json && json.data && json.data.Page && json.data.Page.media;
+                var out = [];
+                if (media) for (var i = 0; i < media.length; i++) { var it = uxMapMedia(media[i]); if (it) out.push(it); }
+                addItems(out);
+            });
 
-                    hianimeResults.forEach(function (item) {
-                        var norm = (item.title || item.name || "").toLowerCase().trim();
-                        if (norm && !map[norm]) {
-                            map[norm] = true;
-                            combined.push(item);
+            var relPromise = uxAnilistRequest(relQuery, { search: rawQ }).then(function (json) {
+                var media = json && json.data && json.data.Page && json.data.Page.media;
+                var out = [];
+                if (media) {
+                    for (var i = 0; i < media.length; i++) {
+                        var edges = (media[i].relations && media[i].relations.edges) || [];
+                        for (var e = 0; e < edges.length; e++) {
+                            var edge = edges[e];
+                            if (!edge || !edge.node || edge.node.type !== "ANIME") continue;
+                            if (!RELATED[edge.relationType]) continue;
+                            var it2 = uxMapMedia(edge.node);
+                            if (it2) out.push(it2);
                         }
-                    });
-
-                    anilistResults.forEach(function (item) {
-                        var norm = (item.title || "").toLowerCase().trim();
-                        if (norm && !map[norm]) {
-                            map[norm] = true;
-                            combined.push(item);
-                        }
-                    });
-
-                    grid.innerHTML = "";
-                    if (!combined.length) {
-                        grid.innerHTML = "<span style='padding:20px 0;'>No franchise titles found for \"" + rawQ + "\".</span>";
-                        return;
                     }
+                }
+                addItems(out);
+            });
 
-                    combined.forEach(function (anime) {
-                        grid.appendChild(createAnimeCard(anime));
-                    });
-                    searchSection.scrollIntoView({ behavior: 'smooth' });
-                });
+            var hiPromise = hianimePromise.then(function (list) { addItems(list); });
+
+            Promise.all([basicPromise, relPromise, hiPromise]).then(function () {
+                if (token !== uxSearchToken) return;
+                if (!shown) {
+                    grid.innerHTML = "<span style='padding:20px 0;'>No franchise titles found for \"" + uxEscHtml(rawQ) + "\".</span>";
+                    return;
+                }
+                try { searchSection.scrollIntoView(true); } catch (e) { }
+            });
         }
 
         /* Strict Episode Payload Normalizer (handles json.data.episodes, array, and indexed objects) */
@@ -4781,15 +4875,13 @@
                     var all = pillsBox.querySelectorAll(".server-pill");
                     for (var p = 0; p < all.length; p++) all[p].classList.remove("active");
                     pill.classList.add("active");
-                    fetchDirectSource(targetId, sName, selectedTrackType, srv.url);
+                    uxPickToken++; fetchDirectSource(targetId, sName, selectedTrackType, srv.url);
                 };
                 pillsBox.appendChild(pill);
             });
 
-            // 4. Automatically trigger stream extraction for chosen server
-            var chosen = servers[preferredIndex];
-            var selectedServerName = chosen.serverName || "zokoanime";
-            fetchDirectSource(targetId, selectedServerName, selectedTrackType, chosen.url);
+            // 4. Auto-pick: first server that yields a direct HLS stream wins, else first embed
+            uxAutoPickSource(targetId, servers, selectedTrackType, pillsBox);
         }
 
         function setCategory(type) {
@@ -4874,6 +4966,69 @@
                 });
         }
 
+        /* ==========================================================================
+           iOS 12 / SAFARI 12 PLAYER PIPELINE (native HLS first, hls.js only if MSE exists)
+           ========================================================================== */
+        function uxCanNativeHls() {
+            try {
+                var v = document.createElement("video");
+                return !!(v.canPlayType && (v.canPlayType("application/vnd.apple.mpegurl") || v.canPlayType("application/x-mpegURL")));
+            } catch (e) { return false; }
+        }
+
+        function uxHasMse() {
+            try { return typeof Hls !== "undefined" && Hls.isSupported(); } catch (e) { return false; }
+        }
+
+        function uxResetVideo(video) {
+            if (hlsEngine) { try { hlsEngine.destroy(); } catch (e) { } hlsEngine = null; }
+            try { video.pause(); } catch (e) { }
+            video.onloadedmetadata = null;
+            video.onloadeddata = null;
+            video.oncanplay = null;
+            video.onplaying = null;
+            video.onerror = null;
+            var oldTracks = video.querySelectorAll("track");
+            for (var t = 0; t < oldTracks.length; t++) video.removeChild(oldTracks[t]);
+            video.removeAttribute("src");
+            try { video.load(); } catch (e) { }
+        }
+
+        function uxPlaybackFailed(url, why) {
+            console.warn("Playback failed:", why, url);
+            showPlayerLoader("Could not play this stream here. Try another server pill or tap OPEN NATIVE PLAYER.");
+            var ext = document.getElementById("iosExternalPlayerBtn");
+            if (ext) ext.href = url;
+        }
+
+        function uxPlayNative(video, url) {
+            var started = false;
+            var watchdog = null;
+            function ok() {
+                if (started) return;
+                started = true;
+                if (watchdog) clearTimeout(watchdog);
+                hidePlayerLoader();
+            }
+            video.onloadedmetadata = function () {
+                var p = video.play();
+                if (p && p.catch) p.catch(function () { hidePlayerLoader(); }); // user taps the controls
+            };
+            video.onloadeddata = function () { hidePlayerLoader(); };
+            video.oncanplay = function () { hidePlayerLoader(); };
+            video.onplaying = ok;
+            video.onerror = function () {
+                if (watchdog) clearTimeout(watchdog);
+                uxPlaybackFailed(url, "media error " + (video.error ? video.error.code : "?"));
+            };
+            video.src = url;
+            try { video.load(); } catch (e) { }
+            // Last-resort timer: if nothing has loaded, report instead of leaving a black box
+            watchdog = setTimeout(function () {
+                if (!started && video.readyState < 2) uxPlaybackFailed(url, "timeout");
+            }, 25000);
+        }
+
         function playResolvedMedia(url, isRawHls, tracks) {
             var video = document.getElementById("cinemaVideoPlayer");
             var iframe = document.getElementById("cinemaIframe");
@@ -4881,24 +5036,19 @@
 
             var extBtn = document.getElementById("extStreamBtn");
             if (extBtn) extBtn.href = url;
+            var iosBtn = document.getElementById("iosExternalPlayerBtn");
+            if (iosBtn) iosBtn.href = url;
 
             if (isRawHls) {
-                // Case 1 (Raw HLS): Hide iframe, play m3u8 natively via Hls.js
+                // Direct stream: hide iframe, use the <video> element
                 iframe.style.display = "none";
                 iframe.src = "about:blank";
                 video.style.display = "block";
                 attachHlsStream(url, tracks || []);
             } else {
-                // Case 2 (Embed Player / Referer): Zokoanime / Megacloud web player into dedicated iframe
-                if (hlsEngine) {
-                    hlsEngine.destroy();
-                    hlsEngine = null;
-                }
-                video.pause();
-                video.removeAttribute("src");
-                video.load();
+                // Embed page: dedicated iframe
+                uxResetVideo(video);
                 video.style.display = "none";
-
                 iframe.style.display = "block";
                 iframe.src = url;
                 hidePlayerLoader();
@@ -4909,20 +5059,19 @@
             var video = document.getElementById("cinemaVideoPlayer");
             if (!video) return;
 
-            // 1. Remove existing track elements
-            var oldTracks = video.querySelectorAll("track");
-            for (var t = 0; t < oldTracks.length; t++) {
-                video.removeChild(oldTracks[t]);
-            }
+            uxResetVideo(video);
 
-            // 2. Clear native src attributes before handing over to Hls.js
-            video.pause();
-            video.removeAttribute("src");
-            video.load();
+            // Inline playback attributes (must be present before src is set on iOS)
+            video.setAttribute("playsinline", "");
+            video.setAttribute("webkit-playsinline", "");
+            video.playsInline = true;
+            video.controls = true;
+            video.preload = "auto";
+            video.style.display = "block";
 
-            // 3. Append Subtitle Tracks safely
             if (tracks && tracks.length > 0) {
-                tracks.forEach(function (tr) {
+                for (var k = 0; k < tracks.length; k++) {
+                    var tr = tracks[k];
                     if (tr && (tr.kind === "captions" || tr.kind === "subtitles") && tr.file) {
                         var trackEl = document.createElement("track");
                         trackEl.kind = "subtitles";
@@ -4932,83 +5081,152 @@
                         if (tr.default) trackEl.default = true;
                         video.appendChild(trackEl);
                     }
-                });
+                }
             }
 
-            // 4. Initialize Hls.js
-            if (Hls.isSupported()) {
-                if (hlsEngine) {
-                    hlsEngine.destroy();
-                    hlsEngine = null;
-                }
+            var isM3u8 = /\.m3u8/i.test(streamUrl);
 
+            // 1) Native path: iOS decodes HLS in hardware. Always preferred when available.
+            if (!isM3u8 || uxCanNativeHls()) {
+                uxPlayNative(video, streamUrl);
+                return;
+            }
+
+            // 2) hls.js path (only where Media Source Extensions exist)
+            if (uxHasMse()) {
                 hlsEngine = new Hls({
-                    enableWorker: true,
-                    lowLatencyMode: true,
+                    enableWorker: false,
+                    lowLatencyMode: false,
                     backBufferLength: 60,
                     maxBufferLength: 30,
                     maxMaxBufferLength: 60,
-                    xhrSetup: function (xhr) {
-                        xhr.withCredentials = false;
-                    }
+                    xhrSetup: function (xhr) { xhr.withCredentials = false; }
                 });
-
                 hlsEngine.loadSource(streamUrl);
                 hlsEngine.attachMedia(video);
-
                 hlsEngine.on(Hls.Events.MANIFEST_PARSED, function () {
                     hidePlayerLoader();
-                    var playPromise = video.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(function (e) {
-                            console.log("Autoplay prevented:", e);
-                        });
+                    var p = video.play();
+                    if (p && p.catch) p.catch(function () { });
+                });
+                hlsEngine.on(Hls.Events.ERROR, function (event, data) {
+                    if (!data || !data.fatal) return;
+                    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                        hlsEngine.startLoad();
+                    } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                        hlsEngine.recoverMediaError();
+                    } else {
+                        try { hlsEngine.destroy(); } catch (e) { }
+                        hlsEngine = null;
+                        uxPlaybackFailed(streamUrl, "hls.js fatal");
                     }
                 });
+                return;
+            }
 
-                hlsEngine.on(Hls.Events.ERROR, function (event, data) {
-                    if (data.fatal) {
-                        switch (data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                console.warn("HLS network error, attempting reload...");
-                                hlsEngine.startLoad();
-                                break;
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.warn("HLS media error, attempting recovery...");
-                                hlsEngine.recoverMediaError();
-                                break;
-                            default:
-                                console.error("Fatal HLS unrecoverable error:", data);
-                                hlsEngine.destroy();
-                                showPlayerLoader("Stream offline. Switch to another server pill.");
-                                break;
+            uxPlaybackFailed(streamUrl, "no HLS support");
+        }
+
+        /* Resolve one server to {url, isHls, tracks} without playing it */
+        function uxResolveSource(episodeId, serverName, category, fallbackUrl) {
+            var srvName = (serverName || "zokoanime").toString().trim().toLowerCase();
+            var cat = (category || selectedTrackType || "sub").toString().trim().toLowerCase();
+            var endpoint = API_BASE + "/anime/episode-srcs?id=" + encodeURIComponent(episodeId) +
+                "&server=" + encodeURIComponent(srvName) + "&category=" + encodeURIComponent(cat);
+
+            function viaFallback() {
+                if (!fallbackUrl) return null;
+                return { url: fallbackUrl, isHls: /\.m3u8/i.test(fallbackUrl), tracks: [] };
+            }
+
+            return fetchWithTimeout(endpoint, 30000)
+                .then(function (res) {
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    return res.json();
+                })
+                .then(function (json) {
+                    var data = (json && json.data) ? json.data : json;
+                    if (!data) throw new Error("Empty payload");
+                    var tracks = (data.tracks && Array.isArray(data.tracks)) ? data.tracks : [];
+                    if (data.sources && data.sources.length) {
+                        // prefer an actual HLS source over anything else
+                        for (var i = 0; i < data.sources.length; i++) {
+                            var src = data.sources[i];
+                            if (src && src.url && (src.type === "hls" || /\.m3u8/i.test(src.url))) {
+                                return { url: src.url, isHls: true, tracks: tracks };
+                            }
+                        }
+                        if (data.sources[0] && data.sources[0].url) {
+                            var u0 = data.sources[0].url;
+                            return { url: u0, isHls: /\.mp4/i.test(u0), tracks: tracks };
                         }
                     }
-                });
-            } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-                video.src = streamUrl;
-                video.addEventListener("loadedmetadata", function () {
-                    hidePlayerLoader();
-                    var playPromise = video.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(function () { });
-                    }
-                }, { once: true });
-            } else {
-                showPlayerLoader("HLS playback is not supported on this browser.");
+                    if (data.headers && data.headers.Referer) return { url: data.headers.Referer, isHls: false, tracks: tracks };
+                    if (data.iframeUrl) return { url: data.iframeUrl, isHls: false, tracks: tracks };
+                    return viaFallback();
+                })
+                .catch(function () { return viaFallback(); });
+        }
+
+        /* Try servers in preference order; use the first direct HLS stream, else the first embed */
+        var uxPickToken = 0;
+        function uxAutoPickSource(epId, servers, category, pillsBox) {
+            var token = ++uxPickToken;
+            var rank = function (srv) {
+                var n = (srv.serverName || "").toLowerCase();
+                if (n.indexOf("zoko") !== -1) return 0;
+                if (n.indexOf("megacloud") !== -1) return 1;
+                if (n.indexOf("hd-2") !== -1) return 2;
+                return 3;
+            };
+            var order = [];
+            for (var r = 0; r <= 3; r++) {
+                for (var i = 0; i < servers.length; i++) if (rank(servers[i]) === r) order.push(servers[i]);
             }
+            var embedFallback = null;
+            var pos = 0;
+
+            function markPill(srv) {
+                var idx = -1;
+                for (var q = 0; q < servers.length; q++) if (servers[q] === srv) { idx = q; break; }
+                var all = pillsBox ? pillsBox.querySelectorAll(".server-pill") : [];
+                for (var p = 0; p < all.length; p++) {
+                    if (p === idx) all[p].classList.add("active"); else all[p].classList.remove("active");
+                }
+            }
+
+            function next() {
+                if (token !== uxPickToken) return;
+                if (pos >= order.length) {
+                    if (embedFallback) {
+                        markPill(embedFallback.srv);
+                        playResolvedMedia(embedFallback.url, false, embedFallback.tracks);
+                    } else {
+                        showPlayerLoader("Stream offline. Try another server pill.");
+                    }
+                    return;
+                }
+                var srv = order[pos++];
+                showPlayerLoader("Looking for a direct stream (" + (srv.serverName || "server") + ")...");
+                uxResolveSource(epId, srv.serverName, category, srv.url).then(function (res) {
+                    if (token !== uxPickToken) return;
+                    if (res && res.isHls) {
+                        markPill(srv);
+                        playResolvedMedia(res.url, true, res.tracks);
+                    } else {
+                        if (res && !embedFallback) embedFallback = { srv: srv, url: res.url, tracks: res.tracks };
+                        next();
+                    }
+                });
+            }
+            next();
         }
 
         function closeCinema() {
-            if (hlsEngine) {
-                hlsEngine.destroy();
-                hlsEngine = null;
-            }
+            uxPickToken++;
             var video = document.getElementById("cinemaVideoPlayer");
             if (video) {
-                video.pause();
-                video.removeAttribute("src");
-                video.load();
+                uxResetVideo(video);
                 video.style.display = "none";
             }
             var iframe = document.getElementById("cinemaIframe");
@@ -5017,7 +5235,9 @@
                 iframe.style.display = "none";
             }
             var overlay = document.getElementById("cinemaOverlay");
-            if (overlay) overlay.style.display = "none"; document.body.style.overflow = ""; hidePlayerLoader();
+            if (overlay) overlay.style.display = "none";
+            document.body.style.overflow = "";
+            hidePlayerLoader();
         }
 
         /* "MY LIBRARY" STORAGE & VIEW MANAGEMENT */
@@ -5415,25 +5635,7 @@
             }
             setInterval(healIos12WebpCards, 1500);
 
-            // Native HLS (.m3u8) fallback for iOS 12 Safari when Hls.isSupported() is false
-            if (typeof attachHlsStream === 'function') {
-                var _origAttachHls = attachHlsStream;
-                attachHlsStream = function (streamUrl, tracks) {
-                    var vid = document.getElementById('cinemaVideoPlayer');
-                    if (vid && (typeof Hls === 'undefined' || !Hls.isSupported()) && vid.canPlayType('application/vnd.apple.mpegurl')) {
-                        vid.style.display = 'block';
-                        vid.src = streamUrl;
-                        vid.onloadedmetadata = function () {
-                            vid.play().catch(function () {});
-                        };
-                        vid.load();
-                        if (typeof hidePlayerLoader === 'function') hidePlayerLoader();
-                        return;
-                    }
-                    return _origAttachHls(streamUrl, tracks);
-                };
-            }
-        })();
+            })();
     </script>
 </body>
 
